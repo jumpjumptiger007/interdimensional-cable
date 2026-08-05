@@ -12,37 +12,42 @@ body {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  padding: 20px;
 }
 
-/* 电视机与遥控器布局 */
+/* 电视机与遥控器主容器 (响应式大屏) */
 .tv-container {
   display: flex;
   gap: 30px;
   align-items: center;
+  justify-content: center;
   background: #2b2b2b;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+  width: 92vw;          /* 占据浏览器 92% 的宽度 */
+  max-width: 1300px;    /* 限制超大屏上的最大宽度 */
 }
 
-/* 电视机框容器 */
+/* 电视屏幕区域 (核心改动：自适应大屏并保持 16:9 比例) */
 .tv-screen {
   position: relative;
-  width: 640px;
-  height: 360px;
+  flex: 1;              /* 优先撑满容器主体空间 */
+  aspect-ratio: 16 / 9; /* 强制维持标准 16:9 画面比例 */
+  max-height: 75vh;     /* 限制最大高度为屏幕的 75%，防止上下溢出 */
   background-color: #000;
-  border: 16px solid #4a3b32; /* 简易木纹外框，后续添加整体背景图后可设为透明 */
-  border-radius: 20px;
+  border: 20px solid #4a3b32; /* 加厚复古木纹边框 */
+  border-radius: 24px;
   overflow: hidden;
 }
 
 #player {
   width: 100%;
   height: 100%;
-  pointer-events: none; /* 屏蔽直接点击，由遥控器全权控制 */
+  pointer-events: none; /* 屏蔽屏幕直接点击，全权交由遥控器控制 */
 }
 
-/* 雪花屏动画 Canvas */
+/* 雪花屏 Canvas */
 #noiseCanvas {
   position: absolute;
   top: 0;
@@ -75,22 +80,23 @@ body {
   display: none;
 }
 
-/* 简易遥控器外观 */
+/* 遥控器 UI (固定适中宽度) */
 .remote-control {
-  width: 130px;
+  width: 140px;
+  flex-shrink: 0;      /* 防止电视变大时拉瘪遥控器 */
   background: #333;
-  border-radius: 16px;
-  padding: 20px 15px;
+  border-radius: 18px;
+  padding: 24px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   border: 2px solid #555;
   box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
 }
 
 .remote-title {
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 2px;
   color: #aaa;
   font-weight: bold;
@@ -98,20 +104,20 @@ body {
 
 .remote-row {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
 .btn {
   flex: 1;
-  padding: 10px 0;
+  padding: 12px 0;
   background: #555;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 11px;
+  font-size: 12px;
   box-shadow: 0 4px #222;
   transition: all 0.1s ease;
 }
@@ -129,4 +135,24 @@ body {
 .btn-mute {
   background: #f39c12;
   width: 100%;
+}
+
+/* 移动端/窄屏自动调整为上下布局 */
+@media (max-width: 850px) {
+  .tv-container {
+    flex-direction: column;
+    width: 96vw;
+    padding: 16px;
+  }
+  .tv-screen {
+    width: 100%;
+    border-width: 12px;
+  }
+  .remote-control {
+    width: 100%;
+    max-width: 320px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
