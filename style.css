@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #1a1a1a;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* 电视机与遥控器布局 */
+.tv-container {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  background: #2b2b2b;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+/* 电视机框容器 */
+.tv-screen {
+  position: relative;
+  width: 640px;
+  height: 360px;
+  background-color: #000;
+  border: 16px solid #4a3b32; /* 简易木纹外框，后续添加整体背景图后可设为透明 */
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+#player {
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* 屏蔽直接点击，由遥控器全权控制 */
+}
+
+/* 雪花屏动画 Canvas */
+#noiseCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+#noiseCanvas.active {
+  opacity: 1;
+}
+
+/* 关机黑屏遮罩 */
+.power-off-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: 10;
+  display: block;
+}
+
+.tv-screen.powered-on .power-off-overlay {
+  display: none;
+}
+
+/* 简易遥控器外观 */
+.remote-control {
+  width: 130px;
+  background: #333;
+  border-radius: 16px;
+  padding: 20px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  border: 2px solid #555;
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.remote-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #aaa;
+  font-weight: bold;
+}
+
+.remote-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 0;
+  background: #555;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 11px;
+  box-shadow: 0 4px #222;
+  transition: all 0.1s ease;
+}
+
+.btn:active {
+  box-shadow: 0 1px #222;
+  transform: translateY(3px);
+}
+
+.btn-power {
+  background: #e74c3c;
+  width: 100%;
+}
+
+.btn-mute {
+  background: #f39c12;
+  width: 100%;
+}

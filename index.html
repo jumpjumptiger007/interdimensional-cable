@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interdimensional Cable</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="tv-container">
+    <!-- 电视屏幕区域 -->
+    <div class="tv-screen" id="tvScreen">
+      <!-- 雪花屏 Canvas (换台/关机时渲染) -->
+      <canvas id="noiseCanvas"></canvas>
+      <!-- 关机黑屏遮罩 -->
+      <div class="power-off-overlay" id="powerOverlay"></div>
+      <!-- YouTube 播放器嵌入点 -->
+      <div id="player"></div>
+    </div>
+
+    <!-- 简易遥控器 UI (后续可根据背景图片调整位置) -->
+    <div class="remote-control">
+      <div class="remote-title">REMOTE</div>
+      <button class="btn btn-power" id="btnPower">PWR</button>
+      <div class="remote-row">
+        <button class="btn" id="btnChannelNext">CH +</button>
+        <button class="btn" id="btnChannelPrev">CH -</button>
+      </div>
+      <div class="remote-row">
+        <button class="btn" id="btnVolUp">VOL +</button>
+        <button class="btn" id="btnVolDown">VOL -</button>
+      </div>
+      <button class="btn btn-mute" id="btnMute">MUTE</button>
+    </div>
+  </div>
+
+  <!-- 引入 YouTube IFrame Player API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="app.js"></script>
+</body>
+</html>
