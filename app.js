@@ -99,6 +99,7 @@ function stopNoise() {
 }
 
 // 4. YouTube API 初始化与事件监听
+// 找到 app.js 中的这一段并更新：
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: videoList[currentChannelIndex],
@@ -108,13 +109,16 @@ function onYouTubeIframeAPIReady() {
       'disablekb': 1,
       'modestbranding': 1,
       'rel': 0,
-      'playsinline': 1
+      'playsinline': 1,
+      'cc_load_policy': 0, // 💡 0 代表默认强制关闭 CC 字幕
+      'iv_load_policy': 3  // 💡 顺便隐藏视频内部的弹窗遮罩/注解
     },
     events: {
       'onStateChange': onPlayerStateChange
     }
   });
 }
+
 
 // 监听播放状态：当前频道视频播放结束，自动切到下一台
 function onPlayerStateChange(event) {
