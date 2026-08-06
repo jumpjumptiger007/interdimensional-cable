@@ -140,3 +140,18 @@ body {
   background: #f39c12;
   width: 100%;
 }
+
+/* 随机按钮样式 */
+.btn-rnd {
+  background: #3498db;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+/* 随机模式开启时的发光高亮效果 */
+.btn-rnd.active {
+  background: #2ecc71;
+  color: #000;
+  box-shadow: 0 0 10px #2ecc71;
+  font-weight: bold;
+}
