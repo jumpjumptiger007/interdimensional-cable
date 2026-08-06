@@ -1,4 +1,4 @@
-// 默认 Mock/兜底视频列表 (仅当 fetch 本地 videos.json 失败时使用)
+// 默认 Mock/兜底视频列表
 let videoList = [
   "dQw4w9WgXcQ",
   "L_LUpnjgPso",
@@ -12,29 +12,29 @@ let currentChannelIndex = 0;
 let isPowerOn = false;
 let isMuted = false;
 
-// 1. 优先读取自动生成的 videos.json (增加防缓存时间戳)
+// 💡 记忆库：用来保存每个视频 ID 播放到的秒数 (例如: { "dQw4w9WgXcQ": 45.2 })
+const videoPlaybackTimes = {};
+
+// 1. 优先读取自动生成的 videos.json (防缓存)
 async function loadVideoList() {
   try {
-    // 加上 ?t= 时间戳，防止浏览器强缓存 GitHub Pages 上的旧 json 数据
     const response = await fetch('videos.json?t=' + Date.now());
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
         videoList = data;
-        // 随机打乱频道顺序，每次刷新页面都有新鲜感
         videoList.sort(() => Math.random() - 0.5);
         console.log(`✅ 成功加载 ${videoList.length} 个 Reddit 真实频道！`);
       }
     }
   } catch (e) {
-    console.warn("⚠️ 未能加载本地 videos.json (可能因本地 file:// 跨域拦截)，使用兜底视频列表。", e);
+    console.warn("⚠️ 未能加载本地 videos.json，使用兜底视频列表。", e);
   }
 }
 
-// 页面初始化时异步加载数据
 loadVideoList();
 
-// 2. Web Audio API 纯代码实时生成换台“沙沙”白噪音音效
+// 2. Web Audio API 白噪音
 let audioCtx = null;
 function playStaticSound(duration = 400) {
   if (!audioCtx) {
@@ -49,7 +49,7 @@ function playStaticSound(duration = 400) {
   const output = buffer.getChannelData(0);
 
   for (let i = 0; i < bufferSize; i++) {
-    output[i] = Math.random() * 2 - 1; // 产生随机杂音采样
+    output[i] = Math.random() * 2 - 1;
   }
 
   const whiteNoise = audioCtx.createBufferSource();
@@ -64,14 +64,14 @@ function playStaticSound(duration = 400) {
   whiteNoise.start();
 }
 
-// 3. Canvas 雪花屏画面生成
+// 3. Canvas 雪花屏
 const canvas = document.getElementById('noiseCanvas');
 const ctx = canvas.getContext('2d');
 let noiseInterval = null;
 
 function generateNoise() {
   if (!canvas) return;
-  const w = canvas.width = canvas.clientWidth / 2; // 降采样提高绘制性能
+  const w = canvas.width = canvas.clientWidth / 2;
   const h = canvas.height = canvas.clientHeight / 2;
   const imgData = ctx.createImageData(w, h);
   const buffer32 = new Uint32Array(imgData.data.buffer);
@@ -98,8 +98,7 @@ function stopNoise() {
   }
 }
 
-// 4. YouTube API 初始化与事件监听
-// 找到 app.js 中的这一段并更新：
+// 4. YouTube API 初始化
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: videoList[currentChannelIndex],
@@ -110,8 +109,8 @@ function onYouTubeIframeAPIReady() {
       'modestbranding': 1,
       'rel': 0,
       'playsinline': 1,
-      'cc_load_policy': 0, // 💡 0 代表默认强制关闭 CC 字幕
-      'iv_load_policy': 3  // 💡 顺便隐藏视频内部的弹窗遮罩/注解
+      'cc_load_policy': 0,
+      'iv_load_policy': 3
     },
     events: {
       'onStateChange': onPlayerStateChange
@@ -119,26 +118,43 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-
-// 监听播放状态：当前频道视频播放结束，自动切到下一台
+// 5. 播放状态处理
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && isPowerOn) {
+    // 💡 视频自然播放完毕，清空它的时间记忆（下次切回来重新播放）
+    const currentVideoId = videoList[currentChannelIndex];
+    delete videoPlaybackTimes[currentVideoId];
+    
     changeChannel(1);
   }
 }
 
-// 5. 遥控器核心逻辑控制
+// 6. 遥控器换台（含进度记忆逻辑）
 function changeChannel(direction) {
   if (!isPowerOn) return;
+
+  // 💡 A. 换台前：记录当前视频放到了第几秒
+  if (player && player.getCurrentTime && videoList[currentChannelIndex]) {
+    const currentVideoId = videoList[currentChannelIndex];
+    videoPlaybackTimes[currentVideoId] = player.getCurrentTime() || 0;
+  }
 
   playStaticSound(450);
   startNoise();
 
   currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
+  const nextVideoId = videoList[currentChannelIndex];
+
+  // 💡 B. 读取新切入频道的进度，若没播过则从 0 秒开始
+  const savedTime = videoPlaybackTimes[nextVideoId] || 0;
 
   setTimeout(() => {
     if (player && player.loadVideoById) {
-      player.loadVideoById(videoList[currentChannelIndex]);
+      // 💡 C. 传入 startSeconds 跳转到上次离开的时间
+      player.loadVideoById({
+        videoId: nextVideoId,
+        startSeconds: savedTime
+      });
     }
     setTimeout(stopNoise, 150);
   }, 350);
@@ -167,7 +183,7 @@ function togglePower() {
   }
 }
 
-// 6. 绑定遥控器按钮点击事件
+// 绑定遥控器事件
 document.getElementById('btnPower').addEventListener('click', togglePower);
 document.getElementById('btnChannelNext').addEventListener('click', () => changeChannel(1));
 document.getElementById('btnChannelPrev').addEventListener('click', () => changeChannel(-1));
