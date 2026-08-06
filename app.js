@@ -1,264 +1,287 @@
-/**
- * 跨次元电视 (Interdimensional Cable) - 核心重构版 app.js
- */
-
-// ==========================================
-// 1. 频道配置与全局状态管理
-// ==========================================
-// 请保留或修改你原有的频道数据结构
-const CHANNELS = [
-    { id: 'ch_01', videoId: 'dQw4w9WgXcQ', name: 'Channel 01' },
-    { id: 'ch_02', videoId: '9bZkp7q19f0', name: 'Channel 02' },
-    { id: 'ch_03', videoId: 'L_LUpnjgPso', name: 'Channel 03' }
+// 默认 Mock/兜底视频列表
+let videoList = [
+  "dQw4w9WgXcQ",
+  "L_LUpnjgPso",
+  "9bZkp7q19f0",
+  "w4m6N7Zk-yM",
+  "fC7oUOUEEi4"
 ];
 
-let currentChannelIndex = 0;
-let isRndEnabled = true; // RND 开关状态（默认开启）
 let player = null;
+let currentChannelIndex = 0;
+let isPowerOn = false;
+let isMuted = false;
+let isRandom = false; // 随机起点开关
+let osdTimer = null;
 
-/**
- * 频道记忆状态对象结构:
- * { 
- *   [channelId]: { 
- *     visited: boolean,  // 是否已被切入过
- *     savedTime: number  // 离开时的精确秒数
- *   } 
- * }
- */
-const channelsState = {};
+// 💡 纯粹记忆库：只记录每个视频离开时的精准秒数 (例如: { "dQw4w9WgXcQ": 42.5 })
+const videoPlaybackTimes = {};
 
-// ==========================================
-// 2. 音效与视效 (DO NOT TOUCH - 保持不变)
-// ==========================================
+// 1. 读取视频列表 (保持顺序)
+async function loadVideoList() {
+  try {
+    const response = await fetch('videos.json?t=' + Date.now());
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        videoList = data;
+        console.log(`✅ 成功加载 ${videoList.length} 个跨次元频道！`);
+      }
+    }
+  } catch (e) {
+    console.warn("⚠️ 读取 videos.json 失败，使用默认列表。", e);
+  }
+}
+
+loadVideoList();
+
+// 2. 复古荧光台号 OSD 显示
+function showChannelOSD() {
+  const osd = document.getElementById('channelDisplay');
+  if (!osd || !isPowerOn) return;
+
+  const channelNum = String(currentChannelIndex + 1).padStart(2, '0');
+  osd.innerText = isRandom ? `CH ${channelNum} (RND)` : `CH ${channelNum}`;
+  osd.classList.add('show');
+
+  clearTimeout(osdTimer);
+  osdTimer = setTimeout(() => {
+    osd.classList.remove('show');
+  }, 2200);
+}
+
+// 3. Web Audio 白噪音
 let audioCtx = null;
+function playStaticSound(duration = 400) {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
 
-function playWhiteNoise(durationMs = 300) {
-    try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        
-        const bufferSize = audioCtx.sampleRate * (durationMs / 1000);
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const output = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
+  const bufferSize = audioCtx.sampleRate * (duration / 1000);
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const output = buffer.getChannelData(0);
 
-        const whiteNoise = audioCtx.createBufferSource();
-        whiteNoise.buffer = buffer;
-        
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime); // 白噪音音量
-        
-        whiteNoise.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        whiteNoise.start();
-    } catch (e) {
-        console.warn('AudioContext 不支持或自动播放受限', e);
-    }
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  const whiteNoise = audioCtx.createBufferSource();
+  whiteNoise.buffer = buffer;
+
+  const gainNode = audioCtx.createGain();
+  gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (duration / 1000));
+
+  whiteNoise.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  whiteNoise.start();
 }
 
-function playSnowEffect(durationMs = 350) {
-    const canvas = document.getElementById('snow-canvas');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    canvas.style.display = 'block';
+// 4. Canvas 雪花屏
+const canvas = document.getElementById('noiseCanvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
+let noiseInterval = null;
 
-    let animationFrameId;
-    const startTime = Date.now();
+function generateNoise() {
+  if (!canvas || !ctx) return;
+  const w = canvas.width = canvas.clientWidth / 2;
+  const h = canvas.height = canvas.clientHeight / 2;
+  const imgData = ctx.createImageData(w, h);
+  const buffer32 = new Uint32Array(imgData.data.buffer);
 
-    function renderSnow() {
-        const width = canvas.width = canvas.offsetWidth || window.innerWidth;
-        const height = canvas.height = canvas.offsetHeight || window.innerHeight;
-        const imgData = ctx.createImageData(width, height);
-        const buffer = new Uint32Array(imgData.data.buffer);
-
-        for (let i = 0; i < buffer.length; i++) {
-            const color = Math.floor(Math.random() * 255);
-            buffer[i] = (255 << 24) | (color << 16) | (color << 8) | color;
-        }
-
-        ctx.putImageData(imgData, 0, 0);
-
-        if (Date.now() - startTime < durationMs) {
-            animationFrameId = requestAnimationFrame(renderSnow);
-        } else {
-            canvas.style.display = 'none';
-            cancelAnimationFrame(animationFrameId);
-        }
-    }
-
-    renderSnow();
-    playWhiteNoise(durationMs);
+  for (let i = 0; i < buffer32.length; i++) {
+    const v = Math.floor(Math.random() * 255);
+    buffer32[i] = (255 << 24) | (v << 16) | (v << 8) | v;
+  }
+  ctx.putImageData(imgData, 0, 0);
 }
 
-// ==========================================
-// 3. 断点保存与起播策略引擎 (核心修复)
-// ==========================================
-
-/**
- * [修复 1] 纯粹的断点保存逻辑
- * 切走频道时触发，直接保存当前秒数，不计算离开时间差。
- */
-function saveCurrentChannelProgress() {
-    if (!player || typeof player.getCurrentTime !== 'function') return;
-
-    const currentChannel = CHANNELS[currentChannelIndex];
-    if (!currentChannel) return;
-
-    const currentTime = player.getCurrentTime() || 0;
-    
-    // 纯粹记录当前播放进度，记录 visited 状态
-    channelsState[currentChannel.id] = {
-        visited: true,
-        savedTime: currentTime
-    };
-    
-    console.log(`[Progress Saved] 频道 ${currentChannel.id} 记忆点: ${currentTime.toFixed(1)}s`);
+function startNoise() {
+  if (!canvas) return;
+  canvas.classList.add('active');
+  if (!noiseInterval) noiseInterval = setInterval(generateNoise, 40);
 }
 
-/**
- * [修复 2] 播放策略：判定断点续播 vs 长视频随机起播
- */
-function applyPlaybackStrategy() {
-    if (!player || typeof player.getDuration !== 'function') return;
-
-    const currentChannel = CHANNELS[currentChannelIndex];
-    const channelData = channelsState[currentChannel.id] || { visited: false, savedTime: 0 };
-    const duration = player.getDuration() || 0;
-
-    // --- 场景 A：已经访问过的频道 -> 强行恢复上次离开时的断点 (无视 RND) ---
-    if (channelData.visited) {
-        console.log(`[Playback] 恢复断点: 频道 ${currentChannel.id} -> ${channelData.savedTime.toFixed(1)}s`);
-        player.seekTo(channelData.savedTime, true);
-        player.playVideo();
-        return;
-    }
-
-    // --- 场景 B：第一次访问该频道 ---
-    // 判定条件：视频总时长 > 300 秒 (5分钟) 且开启了 RND 模式
-    if (duration > 300 && isRndEnabled) {
-        const maxStartSec = Math.max(0, duration - 60);
-        const randomTime = Math.floor(Math.random() * maxStartSec);
-        
-        console.log(`[Playback] 触发长视频 RND (时长 ${duration.toFixed(0)}s > 300s) -> 随机跳至 ${randomTime}s`);
-        player.seekTo(randomTime, true);
-    } else {
-        // 短视频 (≤ 5 min) 或未开启 RND -> 从 0 秒正常开始
-        console.log(`[Playback] 正常起播: 从 0s 开始播放`);
-        player.seekTo(0, true);
-    }
-
-    player.playVideo();
-
-    // 标记为已访问，防止在当前频道内反复切换时重复触发 RND
-    channelsState[currentChannel.id] = {
-        visited: true,
-        savedTime: player.getCurrentTime() || 0
-    };
+function stopNoise() {
+  if (!canvas) return;
+  canvas.classList.remove('active');
+  if (noiseInterval) {
+    clearInterval(noiseInterval);
+    noiseInterval = null;
+  }
 }
 
-// ==========================================
-// 4. YouTube Iframe API 初始化与事件处理
-// ==========================================
+// 5. YouTube API 初始化
 function onYouTubeIframeAPIReady() {
-    player = new YT.Player('youtube-player', {
-        videoId: CHANNELS[currentChannelIndex].videoId,
-        playerVars: {
-            autoplay: 1,
-            controls: 1,
-            modestbranding: 1,
-            rel: 0
-        },
-        events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange
-        }
-    });
+  player = new YT.Player('player', {
+    videoId: videoList[currentChannelIndex],
+    playerVars: {
+      'autoplay': 0,
+      'controls': 1,
+      'disablekb': 1,
+      'modestbranding': 1,
+      'rel': 0,
+      'playsinline': 1,
+      'cc_load_policy': 0,
+      'iv_load_policy': 3
+    },
+    events: {
+      'onStateChange': onPlayerStateChange
+    }
+  });
 }
 
-function onPlayerReady(event) {
-    applyPlaybackStrategy();
-    updateUI();
-}
-
+// 6. 状态监听：处理“首次进入长视频的随机起点”与“视频放完逻辑”
 function onPlayerStateChange(event) {
-    // 捕获 API 加载完成并开始缓冲/播放的瞬态，确保获取到正确的 Video Duration
-    if (event.data === YT.PlayerState.UNSTARTED || event.data === YT.PlayerState.BUFFERING) {
-        applyPlaybackStrategy();
+  const currentVideoId = videoList[currentChannelIndex];
+
+  // 💡 当视频开始播放时：判断是否需要触发长视频随机起点
+  if (event.data === YT.PlayerState.PLAYING && isPowerOn) {
+    // 只有当该频道从未被访问过（没有记忆点）时触发
+    if (videoPlaybackTimes[currentVideoId] === undefined) {
+      const duration = player.getDuration ? player.getDuration() : 0;
+      
+      // 满足条件：开启 RND 模式 且 视频时长超过 300 秒 (5 分钟)
+      if (isRandom && duration > 300) {
+        // 随机区间: 0 秒 到 (总时长 - 60 秒)
+        const maxStartTime = Math.max(0, duration - 60);
+        const randomStartTime = Math.floor(Math.random() * maxStartTime);
+        
+        player.seekTo(randomStartTime, true);
+        videoPlaybackTimes[currentVideoId] = randomStartTime;
+      } else {
+        videoPlaybackTimes[currentVideoId] = 0;
+      }
     }
+  }
+
+  // 视频播放完毕：清除记忆，自动切下一台
+  if (event.data === YT.PlayerState.ENDED && isPowerOn) {
+    delete videoPlaybackTimes[currentVideoId];
+    changeChannel(1);
+  }
 }
 
-// ==========================================
-// 5. 频道切换控制 (CH+ / CH-)
-// ==========================================
+// 7. 换台逻辑（顺序切台 + 纯粹断点续播）
 function changeChannel(direction) {
-    // 1. 切走前保存当前断点
-    saveCurrentChannelProgress();
+  if (!isPowerOn) return;
 
-    // 2. 顺序更新频道索引 (0 -> 1 -> 2 -> 0)
-    if (direction === 'next') {
-        currentChannelIndex = (currentChannelIndex + 1) % CHANNELS.length;
-    } else if (direction === 'prev') {
-        currentChannelIndex = (currentChannelIndex - 1 + CHANNELS.length) % CHANNELS.length;
+  // 💡 A. 切台前：精准记录当前视频的当前秒数
+  if (player && player.getCurrentTime && videoList[currentChannelIndex]) {
+    const currentVideoId = videoList[currentChannelIndex];
+    if (player.getPlayerState && player.getPlayerState() !== -1) {
+      videoPlaybackTimes[currentVideoId] = player.getCurrentTime() || 0;
     }
+  }
 
-    const newChannel = CHANNELS[currentChannelIndex];
+  playStaticSound(450);
+  startNoise();
 
-    // 3. 播放切台视效与噪音
-    playSnowEffect(350);
+  // 💡 B. 永远严格按顺序切台 (01 -> 02 -> 03)
+  currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
 
-    // 4. 加载新视频
-    if (player && typeof player.loadVideoById === 'function') {
-        player.loadVideoById(newChannel.videoId);
+  showChannelOSD();
+
+  const nextVideoId = videoList[currentChannelIndex];
+  
+  // 💡 C. 检查是否有历史记忆；如果有就跳转断点，没有则为 undefined
+  const savedTime = videoPlaybackTimes[nextVideoId];
+
+  setTimeout(() => {
+    if (player && player.loadVideoById) {
+      player.loadVideoById({
+        videoId: nextVideoId,
+        startSeconds: savedTime !== undefined ? Math.floor(savedTime) : 0
+      });
     }
-
-    updateUI();
+    setTimeout(stopNoise, 150);
+  }, 350);
 }
 
-// ==========================================
-// 6. UI 状态绑定与 DOM 事件监听
-// ==========================================
-function updateUI() {
-    // 更新频道显示文本
-    const channelDisplay = document.getElementById('channel-display');
-    if (channelDisplay) {
-        const channelNumStr = String(currentChannelIndex + 1).padStart(2, '0');
-        channelDisplay.textContent = `CH ${channelNumStr}`;
-    }
+function togglePower() {
+  const tvScreen = document.getElementById('tvScreen');
+  isPowerOn = !isPowerOn;
 
-    // 更新 RND 按钮样式状态
-    const rndBtn = document.getElementById('btn-rnd');
-    if (rndBtn) {
-        rndBtn.classList.toggle('active', isRndEnabled);
-    }
+  if (isPowerOn) {
+    if (tvScreen) tvScreen.classList.add('powered-on');
+    playStaticSound(600);
+    startNoise();
+    showChannelOSD();
+    setTimeout(() => {
+      stopNoise();
+      if (player && player.playVideo) player.playVideo();
+    }, 500);
+  } else {
+    playStaticSound(300);
+    startNoise();
+    if (player && player.pauseVideo) player.pauseVideo();
+    setTimeout(() => {
+      stopNoise();
+      if (tvScreen) tvScreen.classList.remove('powered-on');
+    }, 300);
+  }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // CH+ 按钮：顺序加一
-    const chUpBtn = document.getElementById('btn-ch-up');
-    if (chUpBtn) {
-        chUpBtn.addEventListener('click', () => changeChannel('next'));
-    }
+// 8. 遥控器按键绑定
+function initRemoteEvents() {
+  const btnPower = document.getElementById('btnPower');
+  const btnNext = document.getElementById('btnChannelNext');
+  const btnPrev = document.getElementById('btnChannelPrev');
+  const btnVolUp = document.getElementById('btnVolUp');
+  const btnVolDown = document.getElementById('btnVolDown');
+  const btnMute = document.getElementById('btnMute');
+  const btnRandom = document.getElementById('btnRandom');
 
-    // CH- 按钮：顺序减一
-    const chDownBtn = document.getElementById('btn-ch-down');
-    if (chDownBtn) {
-        chDownBtn.addEventListener('click', () => changeChannel('prev'));
-    }
+  if (btnPower) btnPower.addEventListener('click', togglePower);
+  if (btnNext) btnNext.addEventListener('click', () => changeChannel(1));
+  if (btnPrev) btnPrev.addEventListener('click', () => changeChannel(-1));
 
-    // RND 按钮：切换模式开关
-    const rndBtn = document.getElementById('btn-rnd');
-    if (rndBtn) {
-        rndBtn.addEventListener('click', () => {
-            isRndEnabled = !isRndEnabled;
-            updateUI();
-            console.log(`[RND Mode] ${isRndEnabled ? '启用' : '禁用'}`);
-        });
-    }
-});
+  if (btnVolUp) {
+    btnVolUp.addEventListener('click', () => {
+      if (player && isPowerOn && player.setVolume) {
+        player.setVolume(Math.min(player.getVolume() + 10, 100));
+      }
+    });
+  }
+
+  if (btnVolDown) {
+    btnVolDown.addEventListener('click', () => {
+      if (player && isPowerOn && player.setVolume) {
+        player.setVolume(Math.max(player.getVolume() - 10, 0));
+      }
+    });
+  }
+
+  if (btnMute) {
+    btnMute.addEventListener('click', () => {
+      if (player && isPowerOn && player.mute) {
+        isMuted = !isMuted;
+        if (isMuted) player.mute();
+        else player.unMute();
+      }
+    });
+  }
+
+  if (btnRandom) {
+    btnRandom.addEventListener('click', () => {
+      isRandom = !isRandom;
+      if (isRandom) {
+        btnRandom.classList.add('active');
+        btnRandom.innerText = 'RND: ON';
+      } else {
+        btnRandom.classList.remove('active');
+        btnRandom.innerText = 'RND: OFF';
+      }
+      if (isPowerOn) showChannelOSD();
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initRemoteEvents);
+} else {
+  initRemoteEvents();
+}
