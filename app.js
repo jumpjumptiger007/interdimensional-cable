@@ -11,11 +11,13 @@ let player = null;
 let currentChannelIndex = 0;
 let isPowerOn = false;
 let isMuted = false;
+let isRandom = false; // 💡 随机切台开关状态
 
-// 💡 记忆库：用来保存每个视频 ID 播放到的秒数 (例如: { "dQw4w9WgXcQ": 45.2 })
+// 💡 记忆库：记录每个视频离开时的进度与真实时间戳
+// 格式: { "video_id": { videoTime: 12.5, leaveTimestamp: 1722880000 } }
 const videoPlaybackTimes = {};
 
-// 1. 优先读取自动生成的 videos.json (防缓存)
+// 1. 读取视频列表 (防缓存)
 async function loadVideoList() {
   try {
     const response = await fetch('videos.json?t=' + Date.now());
@@ -24,17 +26,17 @@ async function loadVideoList() {
       if (Array.isArray(data) && data.length > 0) {
         videoList = data;
         videoList.sort(() => Math.random() - 0.5);
-        console.log(`✅ 成功加载 ${videoList.length} 个 Reddit 真实频道！`);
+        console.log(`✅ 成功加载 ${videoList.length} 个跨次元频道！`);
       }
     }
   } catch (e) {
-    console.warn("⚠️ 未能加载本地 videos.json，使用兜底视频列表。", e);
+    console.warn("⚠️ 读取 videos.json 失败，使用默认列表。", e);
   }
 }
 
 loadVideoList();
 
-// 2. Web Audio API 白噪音
+// 2. Web Audio 白噪音
 let audioCtx = null;
 function playStaticSound(duration = 400) {
   if (!audioCtx) {
@@ -118,42 +120,56 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// 5. 播放状态处理
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED && isPowerOn) {
-    // 💡 视频自然播放完毕，清空它的时间记忆（下次切回来重新播放）
     const currentVideoId = videoList[currentChannelIndex];
     delete videoPlaybackTimes[currentVideoId];
-    
     changeChannel(1);
   }
 }
 
-// 6. 遥控器换台（含进度记忆逻辑）
+// 5. 换台核心逻辑（方案 B + 随机切台）
 function changeChannel(direction) {
   if (!isPowerOn) return;
 
-  // 💡 A. 换台前：记录当前视频放到了第几秒
+  // 💡 A. 切台前：保存当前频道的播放秒数 + 离开时刻的绝对时间戳
   if (player && player.getCurrentTime && videoList[currentChannelIndex]) {
     const currentVideoId = videoList[currentChannelIndex];
-    videoPlaybackTimes[currentVideoId] = player.getCurrentTime() || 0;
+    videoPlaybackTimes[currentVideoId] = {
+      videoTime: player.getCurrentTime() || 0,
+      leaveTimestamp: Date.now() / 1000 // 单位：秒
+    };
   }
 
   playStaticSound(450);
   startNoise();
 
-  currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
+  // 💡 B. 根据随机开关决定下一个频道
+  if (isRandom && videoList.length > 1) {
+    let nextIndex;
+    do {
+      nextIndex = Math.floor(Math.random() * videoList.length);
+    } while (nextIndex === currentChannelIndex); // 避免随机到当前同一个台
+    currentChannelIndex = nextIndex;
+  } else {
+    currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
+  }
+
   const nextVideoId = videoList[currentChannelIndex];
 
-  // 💡 B. 读取新切入频道的进度，若没播过则从 0 秒开始
-  const savedTime = videoPlaybackTimes[nextVideoId] || 0;
+  // 💡 C. 方案 B：计算平行宇宙时间流逝 (离开时长 + 原进度)
+  let targetTime = 0;
+  if (videoPlaybackTimes[nextVideoId]) {
+    const saved = videoPlaybackTimes[nextVideoId];
+    const timePassed = (Date.now() / 1000) - saved.leaveTimestamp;
+    targetTime = saved.videoTime + timePassed; // 后台同步流逝
+  }
 
   setTimeout(() => {
     if (player && player.loadVideoById) {
-      // 💡 C. 传入 startSeconds 跳转到上次离开的时间
       player.loadVideoById({
         videoId: nextVideoId,
-        startSeconds: savedTime
+        startSeconds: targetTime
       });
     }
     setTimeout(stopNoise, 150);
@@ -183,10 +199,23 @@ function togglePower() {
   }
 }
 
-// 绑定遥控器事件
+// 6. 绑定事件
 document.getElementById('btnPower').addEventListener('click', togglePower);
 document.getElementById('btnChannelNext').addEventListener('click', () => changeChannel(1));
 document.getElementById('btnChannelPrev').addEventListener('click', () => changeChannel(-1));
+
+// 💡 随机开关点击处理
+const btnRandom = document.getElementById('btnRandom');
+btnRandom.addEventListener('click', () => {
+  isRandom = !isRandom;
+  if (isRandom) {
+    btnRandom.classList.add('active');
+    btnRandom.innerText = 'RND: ON';
+  } else {
+    btnRandom.classList.remove('active');
+    btnRandom.innerText = 'RND: OFF';
+  }
+});
 
 document.getElementById('btnVolUp').addEventListener('click', () => {
   if (player && isPowerOn) {
