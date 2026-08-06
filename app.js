@@ -14,10 +14,12 @@ let isMuted = false;
 let isRandom = false; // 随机起点开关
 let osdTimer = null;
 
-// 💡 纯粹记忆库：只记录每个视频离开时的精准秒数 (例如: { "dQw4w9WgXcQ": 42.5 })
+// 1. 纯粹断点记忆库：只记录离开时的精准秒数 (例: { "dQw4w9WgXcQ": 42 })
 const videoPlaybackTimes = {};
+// 2. 标记防止重复触发随机 Seek
+const hasRandomSeeked = {};
 
-// 1. 读取视频列表 (保持顺序)
+// 读取视频列表
 async function loadVideoList() {
   try {
     const response = await fetch('videos.json?t=' + Date.now());
@@ -35,7 +37,7 @@ async function loadVideoList() {
 
 loadVideoList();
 
-// 2. 复古荧光台号 OSD 显示
+// 复古荧光台号 OSD 显示
 function showChannelOSD() {
   const osd = document.getElementById('channelDisplay');
   if (!osd || !isPowerOn) return;
@@ -50,7 +52,7 @@ function showChannelOSD() {
   }, 2200);
 }
 
-// 3. Web Audio 白噪音
+// Web Audio 白噪音
 let audioCtx = null;
 function playStaticSound(duration = 400) {
   if (!audioCtx) {
@@ -80,7 +82,7 @@ function playStaticSound(duration = 400) {
   whiteNoise.start();
 }
 
-// 4. Canvas 雪花屏
+// Canvas 雪花屏
 const canvas = document.getElementById('noiseCanvas');
 const ctx = canvas ? canvas.getContext('2d') : null;
 let noiseInterval = null;
@@ -114,7 +116,7 @@ function stopNoise() {
   }
 }
 
-// 5. YouTube API 初始化
+// YouTube API 初始化
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player', {
     videoId: videoList[currentChannelIndex],
@@ -134,42 +136,55 @@ function onYouTubeIframeAPIReady() {
   });
 }
 
-// 6. 状态监听：处理“首次进入长视频的随机起点”与“视频放完逻辑”
+// 播放状态监听：精准处理长视频随机起播逻辑
 function onPlayerStateChange(event) {
   const currentVideoId = videoList[currentChannelIndex];
 
-  // 💡 当视频开始播放时：判断是否需要触发长视频随机起点
+  // 💡 当视频处于播放状态且未被初始化时
   if (event.data === YT.PlayerState.PLAYING && isPowerOn) {
-    // 只有当该频道从未被访问过（没有记忆点）时触发
-    if (videoPlaybackTimes[currentVideoId] === undefined) {
-      const duration = player.getDuration ? player.getDuration() : 0;
+    if (videoPlaybackTimes[currentVideoId] === undefined && !hasRandomSeeked[currentVideoId]) {
       
-      // 满足条件：开启 RND 模式 且 视频时长超过 300 秒 (5 分钟)
-      if (isRandom && duration > 300) {
-        // 随机区间: 0 秒 到 (总时长 - 60 秒)
-        const maxStartTime = Math.max(0, duration - 60);
-        const randomStartTime = Math.floor(Math.random() * maxStartTime);
-        
-        player.seekTo(randomStartTime, true);
-        videoPlaybackTimes[currentVideoId] = randomStartTime;
-      } else {
-        videoPlaybackTimes[currentVideoId] = 0;
-      }
+      // 解决 YouTube API 时长延迟异步 Bug：轮询直至获取真实视频时长
+      const tryRandomSeek = () => {
+        const duration = player.getDuration ? player.getDuration() : 0;
+
+        if (duration > 0) {
+          hasRandomSeeked[currentVideoId] = true;
+
+          // 条件：开启 RND 开关 且 视频总时长 > 300 秒 (5分钟)
+          if (isRandom && duration > 300) {
+            const maxStartTime = Math.max(0, duration - 60);
+            const randomStartTime = Math.floor(Math.random() * maxStartTime);
+
+            console.log(`🎲 触发 5 分钟长视频随机起播：第 ${randomStartTime} 秒 (总长: ${Math.floor(duration)} 秒)`);
+            player.seekTo(randomStartTime, true);
+            videoPlaybackTimes[currentVideoId] = randomStartTime;
+          } else {
+            videoPlaybackTimes[currentVideoId] = 0;
+          }
+        } else {
+          // 若视频时长未加载出，100ms 后重试
+          setTimeout(tryRandomSeek, 100);
+        }
+      };
+
+      tryRandomSeek();
     }
   }
 
-  // 视频播放完毕：清除记忆，自动切下一台
+  // 视频自然播放完毕
   if (event.data === YT.PlayerState.ENDED && isPowerOn) {
     delete videoPlaybackTimes[currentVideoId];
+    delete hasRandomSeeked[currentVideoId];
     changeChannel(1);
   }
 }
 
-// 7. 换台逻辑（顺序切台 + 纯粹断点续播）
+// 换台逻辑 (严格顺序切台 + 断点记忆)
 function changeChannel(direction) {
   if (!isPowerOn) return;
 
-  // 💡 A. 切台前：精准记录当前视频的当前秒数
+  // 切台前精准保存当前秒数
   if (player && player.getCurrentTime && videoList[currentChannelIndex]) {
     const currentVideoId = videoList[currentChannelIndex];
     if (player.getPlayerState && player.getPlayerState() !== -1) {
@@ -180,14 +195,12 @@ function changeChannel(direction) {
   playStaticSound(450);
   startNoise();
 
-  // 💡 B. 永远严格按顺序切台 (01 -> 02 -> 03)
+  // 按顺序切台
   currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
 
   showChannelOSD();
 
   const nextVideoId = videoList[currentChannelIndex];
-  
-  // 💡 C. 检查是否有历史记忆；如果有就跳转断点，没有则为 undefined
   const savedTime = videoPlaybackTimes[nextVideoId];
 
   setTimeout(() => {
@@ -225,7 +238,7 @@ function togglePower() {
   }
 }
 
-// 8. 遥控器按键绑定
+// DOM 事件绑定
 function initRemoteEvents() {
   const btnPower = document.getElementById('btnPower');
   const btnNext = document.getElementById('btnChannelNext');
