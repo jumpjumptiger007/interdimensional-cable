@@ -4,79 +4,199 @@
   padding: 0;
 }
 
-/* 1. 全屏铺满，外围仅留 20px 边距一圈 */
+html,
 body {
-  background-color: #121212;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px 800px at 50% 30%, #241d1a 0%, #0e0d0f 58%, #070608 100%);
   color: #fff;
-  font-family: Arial, sans-serif;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
-  padding: 20px;          /* 外围留出的黑框宽度，想更窄可以改成 10px */
-  overflow: hidden;        /* 彻底消除浏览器滚动条 */
-}
-
-/* 2. 主容器：无限制撑满 body */
-.tv-container {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  justify-content: center;
-  background: #2b2b2b;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
-  width: 100%;            /* 撑满宽度 */
-  height: 100%;           /* 撑满高度 */
-}
-
-/* 3. 电视屏幕：吃满绝大部分空间 */
-.tv-screen {
-  position: relative;
-  flex: 1;                /* 自动挤占右侧遥控器之外的所有剩余宽度 */
-  height: 100%;           /* 垂直方向完全撑满 */
-  background-color: #000;
-  border: 16px solid #4a3b32; /* 木纹外框 */
-  border-radius: 20px;
+  font-family: "SF Pro Display", "Segoe UI", Roboto, Arial, sans-serif;
   overflow: hidden;
 }
 
-/* 确保 YouTube iframe 填充屏幕 */
-#player, #player iframe {
+.room {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2.2vw, 28px);
+}
+
+.tv-container {
+  position: relative;
+  display: flex;
+  gap: clamp(14px, 2vw, 26px);
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #2d2622 0%, #191514 100%);
+  padding: clamp(14px, 2vw, 26px);
+  border-radius: 30px;
+  box-shadow:
+    0 40px 90px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* 电视屏幕：复古木纹外框 + 圆角 */
+.tv-screen {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  background-color: #000;
+  border: clamp(10px, 1.4vw, 18px) solid #332821;
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 3px #1b1210,
+    inset 0 0 40px rgba(0, 0, 0, 0.8),
+    0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* YouTube iframe 铺满屏幕 */
+#player {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+#player,
+#player iframe {
   width: 100%;
   height: 100%;
   border: none;
-  pointer-events: auto;
 }
 
-/* 4. 雪花屏 Canvas */
+/* 雪花屏 */
 #noiseCanvas {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 5;
+  z-index: 11;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.1s ease;
+  transition: opacity 0.12s ease;
 }
 
 #noiseCanvas.active {
   opacity: 1;
 }
 
+/* 复古荧光台号 */
+.channel-display {
+  position: absolute;
+  top: 6%;
+  right: 5%;
+  z-index: 12;
+  pointer-events: none;
+  padding: 6px 14px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: clamp(16px, 2vw, 26px);
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #a8ff60;
+  background: rgba(0, 0, 0, 0.38);
+  border-radius: 8px;
+  text-shadow: 0 0 8px rgba(168, 255, 96, 0.85);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.channel-display.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tv-screen:not(.powered-on) .channel-display {
+  opacity: 0;
+}
+
+/* CRT 扫描线 */
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.035) 0,
+    rgba(255, 255, 255, 0.035) 1px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 3px
+  );
+  mix-blend-mode: overlay;
+}
+
+/* 玻璃反光 */
+.screen-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: linear-gradient(
+    118deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.015) 24%,
+    transparent 42%
+  );
+}
+
+/* 电视品牌标签 */
+.brand {
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0.72;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+
+.brand-name {
+  font-size: clamp(9px, 1vw, 13px);
+  letter-spacing: 0.32em;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.brand-sub {
+  font-size: clamp(11px, 1.15vw, 15px);
+  font-weight: 800;
+  letter-spacing: 0.5em;
+  color: #ffd166;
+}
+
+.brand-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a3a3a;
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.8);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.brand-light.on {
+  background: #2ecc71;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.9);
+}
+
 /* 关机黑屏遮罩 */
 .power-off-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  z-index: 13;
   background: #000;
-  z-index: 10;
   display: block;
 }
 
@@ -84,26 +204,37 @@ body {
   display: none;
 }
 
-/* 5. 遥控器 UI：保持右侧固定紧凑宽度 */
+/* 遥控器 */
 .remote-control {
-  width: 120px;
-  flex-shrink: 0;         /* 不允许拉伸变形 */
-  background: #333;
-  border-radius: 16px;
-  padding: 16px 12px;
+  width: clamp(118px, 11vw, 150px);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #34313a 0%, #211f26 100%);
+  border-radius: 22px;
+  padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 13px;
   align-items: center;
-  border: 2px solid #555;
-  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .remote-title {
   font-size: 11px;
+  letter-spacing: 3px;
+  color: #9b93a5;
+  font-weight: 700;
+}
+
+.remote-label {
+  width: 100%;
+  font-size: 9px;
   letter-spacing: 2px;
-  color: #aaa;
-  font-weight: bold;
+  color: #6f6878;
+  text-align: center;
+  margin-bottom: -5px;
 }
 
 .remote-row {
@@ -114,45 +245,96 @@ body {
 
 .btn {
   flex: 1;
-  padding: 10px 0;
-  background: #555;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 12px 0;
+  background: linear-gradient(180deg, #4c4652 0%, #37333e 100%);
+  color: #f3f0f6;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 11px;
-  box-shadow: 0 4px #222;
-  transition: all 0.1s ease;
+  letter-spacing: 1px;
+  box-shadow: 0 5px 0 #16141a;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.12);
 }
 
 .btn:active {
-  box-shadow: 0 1px #222;
-  transform: translateY(3px);
+  box-shadow: 0 1px 0 #16141a;
+  transform: translateY(4px);
 }
 
 .btn-power {
-  background: #e74c3c;
   width: 100%;
+  background: linear-gradient(180deg, #e8544a 0%, #b9342c 100%);
+  box-shadow: 0 5px 0 #641a16;
 }
 
 .btn-mute {
-  background: #f39c12;
   width: 100%;
+  background: linear-gradient(180deg, #f2a93b 0%, #d9851d 100%);
+  box-shadow: 0 5px 0 #6e4210;
 }
 
-/* 随机按钮样式 */
 .btn-rnd {
-  background: #3498db;
   width: 100%;
-  transition: all 0.2s ease;
+  background: linear-gradient(180deg, #3e8ede 0%, #2867b5 100%);
+  box-shadow: 0 5px 0 #123a68;
 }
 
-/* 随机模式开启时的发光高亮效果 */
 .btn-rnd.active {
-  background: #2ecc71;
-  color: #000;
-  box-shadow: 0 0 10px #2ecc71;
-  font-weight: bold;
+  background: linear-gradient(180deg, #34d17b 0%, #1fa45c 100%);
+  color: #06230f;
+  box-shadow: 0 0 14px rgba(52, 209, 123, 0.8), 0 5px 0 #0b5429;
 }
 
+/* 小屏幕下改为上下布局 */
+@media (max-width: 720px) {
+  .room {
+    padding: 8px;
+  }
+
+  .tv-container {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .tv-screen {
+    width: 100%;
+    height: 70%;
+  }
+
+  .remote-control {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .remote-title,
+  .remote-label {
+    display: none;
+  }
+
+  .btn {
+    flex: 1 1 auto;
+    min-width: 48px;
+    padding: 10px 8px;
+  }
+
+  .btn-power,
+  .btn-mute,
+  .btn-rnd {
+    width: auto;
+    flex: 0 0 auto;
+    min-width: 62px;
+  }
+}
