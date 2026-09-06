@@ -19,6 +19,19 @@ const videoPlaybackTimes = {};
 // 2. 标记防止重复触发随机 Seek
 const hasRandomSeeked = {};
 
+// 等待 YouTube API 与视频列表都就绪后再初始化播放器
+let apiReady = false;
+let listReady = false;
+
+// 洗牌：保留「顺序切台 + 断点记忆」逻辑，只改变每次打开时的频道顺序
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // 读取视频列表
 async function loadVideoList() {
   try {
@@ -26,12 +39,16 @@ async function loadVideoList() {
     if (response.ok) {
       const data = await response.json();
       if (Array.isArray(data) && data.length > 0) {
-        videoList = data;
-        console.log(`✅ 成功加载 ${videoList.length} 个跨次元频道！`);
+        videoList = shuffleArray(data);
+        console.log(`✅ 成功加载 ${videoList.length} 个跨次元频道（本次顺序已随机）！`);
       }
     }
   } catch (e) {
     console.warn("⚠️ 读取 videos.json 失败，使用默认列表。", e);
+    videoList = shuffleArray([...videoList]);
+  } finally {
+    listReady = true;
+    tryInitPlayer();
   }
 }
 
@@ -118,6 +135,13 @@ function stopNoise() {
 
 // YouTube API 初始化
 function onYouTubeIframeAPIReady() {
+  apiReady = true;
+  tryInitPlayer();
+}
+
+function tryInitPlayer() {
+  if (!apiReady || !listReady || player) return;
+
   player = new YT.Player('player', {
     videoId: videoList[currentChannelIndex],
     playerVars: {
@@ -216,10 +240,12 @@ function changeChannel(direction) {
 
 function togglePower() {
   const tvScreen = document.getElementById('tvScreen');
+  const powerLed = document.getElementById('powerLed');
   isPowerOn = !isPowerOn;
 
   if (isPowerOn) {
     if (tvScreen) tvScreen.classList.add('powered-on');
+    if (powerLed) powerLed.classList.add('on');
     playStaticSound(600);
     startNoise();
     showChannelOSD();
@@ -230,6 +256,7 @@ function togglePower() {
   } else {
     playStaticSound(300);
     startNoise();
+    if (powerLed) powerLed.classList.remove('on');
     if (player && player.pauseVideo) player.pauseVideo();
     setTimeout(() => {
       stopNoise();
