@@ -5,12 +5,20 @@ import time
 import urllib.request
 import xml.etree.ElementTree as ET
 
+# 默认内容池：以「跨次元电视 / 诡异短片」为主，可按需用环境变量覆盖
+DEFAULT_SUBREDDITS = [
+    "InterdimensionalCable",
+    "NotTimAndEric",
+    "DeepIntoYouTube",
+    "youtubehaiku",
+    "analog_horror",
+]
+
 # 同时支持 watch / embed / v / shorts / youtu.be 链接
 YOUTUBE_REGEX = re.compile(
     r"(?:youtube\.com/(?:watch\?v=|embed/|v/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})"
 )
 
-RSS_URL = "https://www.reddit.com/r/InterdimensionalCable/new/.rss?limit=100"
 ARCTIC_URL = "https://arctic-shift.photon-reddit.com/api/posts/search"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) InterdimensionalTV/1.0"
@@ -18,7 +26,7 @@ HEADERS = {
 
 
 def http_get_json(url, tries=3):
-    """带简单重试的 HTTP GET，返回 JSON 文本解析结果。"""
+    """带简单重试的 HTTP GET，返回解析后的 JSON。"""
     last_err = None
     for attempt in range(tries):
         try:
@@ -48,11 +56,12 @@ def extract_ids(text):
     return YOUTUBE_REGEX.findall(text or "")
 
 
-def fetch_rss(limit=100):
-    """Reddit 官方 RSS，无需鉴权、实时更新，适合每日增量。"""
+def fetch_rss(subreddit, limit=100):
+    """Reddit 官方 RSS，实时性最好；只用于主频道，避免频繁请求触发 429。"""
+    url = f"https://www.reddit.com/r/{subreddit}/new/.rss?limit={limit}"
     ids = []
     try:
-        xml = http_get_text(RSS_URL)
+        xml = http_get_text(url)
         root = ET.fromstring(xml)
         ns = {"a": "http://www.w3.org/2005/Atom"}
         for entry in root.findall("a:entry", ns):
@@ -61,18 +70,18 @@ def fetch_rss(limit=100):
             text = (''.join(content.itertext()) if content is not None else "") + " "
             text += (link.get("href") if link is not None else "")
             ids.extend(extract_ids(text))
-        print(f"  ├─ Reddit RSS 提取到 {len(ids)} 个 YouTube 链接")
+        print(f"  ├─ r/{subreddit} RSS 提取到 {len(ids)} 个 YouTube 链接")
     except Exception as e:  # noqa: BLE001
-        print(f"  └─ Reddit RSS 请求异常（已跳过）: {e}")
+        print(f"  └─ r/{subreddit} RSS 请求异常（已跳过）: {e}")
     return ids
 
 
-def fetch_arctic(limit=100, pages=1):
-    """Arctic Shift 归档 API，支持 before 向前翻页，适合一次性补库。"""
+def fetch_arctic(subreddit, limit=100, pages=1):
+    """Arctic Shift 归档 API，支持 before 向前翻页，适合多个来源 + 一次性补库。"""
     ids = []
     before = None
     for page in range(pages):
-        url = f"{ARCTIC_URL}?subreddit=InterdimensionalCable&limit={limit}"
+        url = f"{ARCTIC_URL}?subreddit={subreddit}&limit={limit}"
         if before:
             url += f"&before={before}"
         try:
@@ -86,12 +95,12 @@ def fetch_arctic(limit=100, pages=1):
                 page_ids.extend(extract_ids(p.get("url") or ""))
             ids.extend(page_ids)
             print(
-                f"  ├─ Arctic Shift 第 {page + 1} 页提取到 {len(page_ids)} 个链接 "
+                f"  ├─ r/{subreddit} Arctic 第 {page + 1} 页提取到 {len(page_ids)} 个链接 "
                 f"(before={before})"
             )
             time.sleep(0.4)
         except Exception as e:  # noqa: BLE001
-            print(f"  └─ Arctic Shift 第 {page + 1} 页请求异常（已跳过）: {e}")
+            print(f"  └─ r/{subreddit} Arctic 第 {page + 1} 页请求异常（已跳过）: {e}")
             break
     return ids
 
@@ -116,13 +125,23 @@ def main():
     existing = load_existing(output_path)
     print(f"📂 当前本地库已有 {len(existing)} 个视频频道")
 
-    new_ids = []
-    new_ids.extend(fetch_rss())
+    subreddits = [
+        s.strip()
+        for s in os.environ.get("SUBREDDITS", ",".join(DEFAULT_SUBREDDITS)).split(",")
+        if s.strip()
+    ]
 
-    # 日常运行保持 1 页即可；一次性补库时把 BACKFILL_PAGES 调大（例如 12）
     backfill_pages = int(os.environ.get("BACKFILL_PAGES", "1"))
-    if backfill_pages > 0:
-        new_ids.extend(fetch_arctic(limit=100, pages=backfill_pages))
+
+    new_ids = []
+
+    # 主频道用 Reddit 官方 RSS 保证实时性，其余频道走归档接口
+    if subreddits:
+        new_ids.extend(fetch_rss(subreddits[0]))
+
+    for subreddit in subreddits:
+        if backfill_pages > 0:
+            new_ids.extend(fetch_arctic(subreddit, limit=100, pages=backfill_pages))
 
     combined = list(existing)
     added = 0
