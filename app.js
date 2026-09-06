@@ -1,4 +1,7 @@
-// 默认 Mock/兜底视频列表
+// Interdimensional Cable
+// Keeps the original playback behavior, but adds UI state synchronization for the redesigned TV/remote.
+
+// Default / fallback videos
 let videoList = [
   "dQw4w9WgXcQ",
   "L_LUpnjgPso",
@@ -11,19 +14,15 @@ let player = null;
 let currentChannelIndex = 0;
 let isPowerOn = false;
 let isMuted = false;
-let isRandom = true; // 随机起点开关（默认开启）
+let isRandom = true;
 let osdTimer = null;
 
-// 1. 纯粹断点记忆库：只记录离开时的精准秒数 (例: { "dQw4w9WgXcQ": 42 })
 const videoPlaybackTimes = {};
-// 2. 标记防止重复触发随机 Seek
 const hasRandomSeeked = {};
 
-// 等待 YouTube API 与视频列表都就绪后再初始化播放器
 let apiReady = false;
 let listReady = false;
 
-// 洗牌：保留「顺序切台 + 断点记忆」逻辑，只改变每次打开时的频道顺序
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -32,19 +31,22 @@ function shuffleArray(arr) {
   return arr;
 }
 
-// 读取视频列表
 async function loadVideoList() {
   try {
-    const response = await fetch('videos.json?t=' + Date.now());
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        videoList = shuffleArray(data);
-        console.log(`✅ 成功加载 ${videoList.length} 个跨次元频道（本次顺序已随机）！`);
-      }
+    const response = await fetch(`videos.json?t=${Date.now()}`);
+
+    if (!response.ok) {
+      throw new Error(`videos.json returned HTTP ${response.status}`);
     }
-  } catch (e) {
-    console.warn("⚠️ 读取 videos.json 失败，使用默认列表。", e);
+
+    const data = await response.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      videoList = shuffleArray(data);
+      console.log(`Loaded ${videoList.length} interdimensional channels.`);
+    }
+  } catch (error) {
+    console.warn("Could not load videos.json. Using fallback channels.", error);
     videoList = shuffleArray([...videoList]);
   } finally {
     listReady = true;
@@ -54,141 +56,176 @@ async function loadVideoList() {
 
 loadVideoList();
 
-// 复古荧光台号 OSD 显示
 function showChannelOSD() {
-  const osd = document.getElementById('channelDisplay');
+  const osd = document.getElementById("channelDisplay");
   if (!osd || !isPowerOn) return;
 
-  const channelNum = String(currentChannelIndex + 1).padStart(2, '0');
-  osd.innerText = isRandom ? `CH ${channelNum} (RND)` : `CH ${channelNum}`;
-  osd.classList.add('show');
+  const channelNum = String(currentChannelIndex + 1).padStart(2, "0");
+  osd.textContent = isRandom ? `CH ${channelNum} · RND` : `CH ${channelNum}`;
+  osd.classList.add("show");
 
   clearTimeout(osdTimer);
   osdTimer = setTimeout(() => {
-    osd.classList.remove('show');
-  }, 2200);
+    osd.classList.remove("show");
+  }, 1900);
 }
 
-// Web Audio 白噪音
+// --- Static noise audio ------------------------------------------------------
+
 let audioCtx = null;
+
 function playStaticSound(duration = 400) {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+
+    const bufferSize = Math.max(1, Math.floor(audioCtx.sampleRate * (duration / 1000)));
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+
+    const whiteNoise = audioCtx.createBufferSource();
+    const gainNode = audioCtx.createGain();
+
+    whiteNoise.buffer = buffer;
+    gainNode.gain.setValueAtTime(0.105, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioCtx.currentTime + duration / 1000
+    );
+
+    whiteNoise.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    whiteNoise.start();
+  } catch (error) {
+    // Audio feedback is decorative; playback controls should still work if WebAudio is blocked.
+    console.debug("Static sound unavailable.", error);
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  const bufferSize = audioCtx.sampleRate * (duration / 1000);
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const output = buffer.getChannelData(0);
-
-  for (let i = 0; i < bufferSize; i++) {
-    output[i] = Math.random() * 2 - 1;
-  }
-
-  const whiteNoise = audioCtx.createBufferSource();
-  whiteNoise.buffer = buffer;
-
-  const gainNode = audioCtx.createGain();
-  gainNode.gain.setValueAtTime(0.12, audioCtx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (duration / 1000));
-
-  whiteNoise.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-  whiteNoise.start();
 }
 
-// Canvas 雪花屏
-const canvas = document.getElementById('noiseCanvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+// --- Static noise canvas -----------------------------------------------------
+
+const canvas = document.getElementById("noiseCanvas");
+const ctx = canvas ? canvas.getContext("2d") : null;
 let noiseInterval = null;
 
 function generateNoise() {
   if (!canvas || !ctx) return;
-  const w = canvas.width = canvas.clientWidth / 2;
-  const h = canvas.height = canvas.clientHeight / 2;
-  const imgData = ctx.createImageData(w, h);
-  const buffer32 = new Uint32Array(imgData.data.buffer);
+
+  const width = Math.max(1, Math.floor(canvas.clientWidth / 2));
+  const height = Math.max(1, Math.floor(canvas.clientHeight / 2));
+
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  const imageData = ctx.createImageData(width, height);
+  const buffer32 = new Uint32Array(imageData.data.buffer);
 
   for (let i = 0; i < buffer32.length; i++) {
-    const v = Math.floor(Math.random() * 255);
-    buffer32[i] = (255 << 24) | (v << 16) | (v << 8) | v;
+    const value = Math.floor(Math.random() * 255);
+    buffer32[i] =
+      (255 << 24) |
+      (value << 16) |
+      (value << 8) |
+      value;
   }
-  ctx.putImageData(imgData, 0, 0);
+
+  ctx.putImageData(imageData, 0, 0);
 }
 
 function startNoise() {
   if (!canvas) return;
-  canvas.classList.add('active');
-  if (!noiseInterval) noiseInterval = setInterval(generateNoise, 40);
+
+  generateNoise();
+  canvas.classList.add("active");
+
+  if (!noiseInterval) {
+    noiseInterval = setInterval(generateNoise, 45);
+  }
 }
 
 function stopNoise() {
   if (!canvas) return;
-  canvas.classList.remove('active');
+
+  canvas.classList.remove("active");
+
   if (noiseInterval) {
     clearInterval(noiseInterval);
     noiseInterval = null;
   }
 }
 
-// YouTube API 初始化
+// --- YouTube ---------------------------------------------------------------
+
 function onYouTubeIframeAPIReady() {
   apiReady = true;
   tryInitPlayer();
 }
 
 function tryInitPlayer() {
-  if (!apiReady || !listReady || player) return;
+  if (!apiReady || !listReady || player || !videoList.length) return;
 
-  player = new YT.Player('player', {
+  player = new YT.Player("player", {
     videoId: videoList[currentChannelIndex],
     playerVars: {
-      'autoplay': 0,
-      'controls': 0,
-      'disablekb': 1,
-      'modestbranding': 1,
-      'rel': 0,
-      'playsinline': 1,
-      'cc_load_policy': 0,
-      'iv_load_policy': 3
+      autoplay: 0,
+      controls: 0,
+      disablekb: 1,
+      modestbranding: 1,
+      rel: 0,
+      playsinline: 1,
+      cc_load_policy: 0,
+      iv_load_policy: 3
     },
     events: {
-      'onStateChange': onPlayerStateChange
+      onStateChange: onPlayerStateChange
     }
   });
 }
 
-// 播放状态监听：精准处理长视频随机起播逻辑
 function onPlayerStateChange(event) {
   const currentVideoId = videoList[currentChannelIndex];
 
-  // 💡 当视频处于播放状态且未被初始化时
-  if (event.data === YT.PlayerState.PLAYING && isPowerOn) {
-    if (videoPlaybackTimes[currentVideoId] === undefined && !hasRandomSeeked[currentVideoId]) {
-      
-      // 解决 YouTube API 时长延迟异步 Bug：轮询直至获取真实视频时长
+  if (
+    event.data === YT.PlayerState.PLAYING &&
+    isPowerOn &&
+    currentVideoId
+  ) {
+    if (
+      videoPlaybackTimes[currentVideoId] === undefined &&
+      !hasRandomSeeked[currentVideoId]
+    ) {
       const tryRandomSeek = () => {
+        if (!player || !isPowerOn || currentVideoId !== videoList[currentChannelIndex]) {
+          return;
+        }
+
         const duration = player.getDuration ? player.getDuration() : 0;
 
         if (duration > 0) {
           hasRandomSeeked[currentVideoId] = true;
 
-          // 条件：开启 RND 开关 且 视频总时长 > 300 秒 (5分钟)
           if (isRandom && duration > 300) {
             const maxStartTime = Math.max(0, duration - 60);
             const randomStartTime = Math.floor(Math.random() * maxStartTime);
 
-            console.log(`🎲 触发 5 分钟长视频随机起播：第 ${randomStartTime} 秒 (总长: ${Math.floor(duration)} 秒)`);
             player.seekTo(randomStartTime, true);
             videoPlaybackTimes[currentVideoId] = randomStartTime;
           } else {
             videoPlaybackTimes[currentVideoId] = 0;
           }
         } else {
-          // 若视频时长未加载出，100ms 后重试
-          setTimeout(tryRandomSeek, 100);
+          setTimeout(tryRandomSeek, 120);
         }
       };
 
@@ -196,31 +233,40 @@ function onPlayerStateChange(event) {
     }
   }
 
-  // 视频自然播放完毕
-  if (event.data === YT.PlayerState.ENDED && isPowerOn) {
+  if (event.data === YT.PlayerState.ENDED && isPowerOn && currentVideoId) {
     delete videoPlaybackTimes[currentVideoId];
     delete hasRandomSeeked[currentVideoId];
     changeChannel(1);
   }
 }
 
-// 换台逻辑 (严格顺序切台 + 断点记忆)
-function changeChannel(direction) {
-  if (!isPowerOn) return;
+// --- Channel / power ---------------------------------------------------------
 
-  // 切台前精准保存当前秒数
-  if (player && player.getCurrentTime && videoList[currentChannelIndex]) {
-    const currentVideoId = videoList[currentChannelIndex];
-    if (player.getPlayerState && player.getPlayerState() !== -1) {
-      videoPlaybackTimes[currentVideoId] = player.getCurrentTime() || 0;
-    }
+function saveCurrentPlaybackPosition() {
+  if (
+    !player ||
+    !player.getCurrentTime ||
+    !player.getPlayerState ||
+    !videoList[currentChannelIndex]
+  ) {
+    return;
   }
 
-  playStaticSound(450);
+  if (player.getPlayerState() !== -1) {
+    videoPlaybackTimes[videoList[currentChannelIndex]] =
+      player.getCurrentTime() || 0;
+  }
+}
+
+function changeChannel(direction) {
+  if (!isPowerOn || !videoList.length) return;
+
+  saveCurrentPlaybackPosition();
+  playStaticSound(430);
   startNoise();
 
-  // 按顺序切台
-  currentChannelIndex = (currentChannelIndex + direction + videoList.length) % videoList.length;
+  currentChannelIndex =
+    (currentChannelIndex + direction + videoList.length) % videoList.length;
 
   showChannelOSD();
 
@@ -234,101 +280,159 @@ function changeChannel(direction) {
         startSeconds: savedTime !== undefined ? Math.floor(savedTime) : 0
       });
     }
-    setTimeout(stopNoise, 150);
-  }, 350);
+
+    setTimeout(stopNoise, 145);
+  }, 320);
+}
+
+function syncPowerUI() {
+  const tvScreen = document.getElementById("tvScreen");
+  const tvSet = document.getElementById("tvSet");
+  const powerLed = document.getElementById("powerLed");
+  const btnPower = document.getElementById("btnPower");
+
+  tvScreen?.classList.toggle("powered-on", isPowerOn);
+  tvSet?.classList.toggle("powered-on", isPowerOn);
+  powerLed?.classList.toggle("on", isPowerOn);
+  btnPower?.classList.toggle("active", isPowerOn);
+  btnPower?.setAttribute("aria-pressed", String(isPowerOn));
 }
 
 function togglePower() {
-  const tvScreen = document.getElementById('tvScreen');
-  const powerLed = document.getElementById('powerLed');
   isPowerOn = !isPowerOn;
 
   if (isPowerOn) {
-    if (tvScreen) tvScreen.classList.add('powered-on');
-    if (powerLed) powerLed.classList.add('on');
-    playStaticSound(600);
+    syncPowerUI();
+    playStaticSound(560);
     startNoise();
     showChannelOSD();
+
     setTimeout(() => {
       stopNoise();
-      if (player && player.playVideo) player.playVideo();
-    }, 500);
+      if (player && player.playVideo) {
+        player.playVideo();
+      }
+    }, 470);
   } else {
-    playStaticSound(300);
+    saveCurrentPlaybackPosition();
+    playStaticSound(280);
     startNoise();
-    if (powerLed) powerLed.classList.remove('on');
-    if (player && player.pauseVideo) player.pauseVideo();
+
+    if (player && player.pauseVideo) {
+      player.pauseVideo();
+    }
+
     setTimeout(() => {
       stopNoise();
-      if (tvScreen) tvScreen.classList.remove('powered-on');
-    }, 300);
+      syncPowerUI();
+    }, 260);
   }
 }
 
-// DOM 事件绑定
+// --- Remote UI ---------------------------------------------------------------
+
+function setPressedFeedback(button) {
+  if (!button) return;
+
+  button.classList.add("is-pressed");
+  setTimeout(() => button.classList.remove("is-pressed"), 105);
+}
+
+function syncMuteUI() {
+  const btnMute = document.getElementById("btnMute");
+  btnMute?.classList.toggle("active", isMuted);
+  btnMute?.setAttribute("aria-pressed", String(isMuted));
+}
+
+function syncRandomUI() {
+  const btnRandom = document.getElementById("btnRandom");
+  if (!btnRandom) return;
+
+  btnRandom.classList.toggle("active", isRandom);
+  btnRandom.setAttribute("aria-pressed", String(isRandom));
+  btnRandom.textContent = isRandom ? "RND" : "SEQ";
+}
+
+function changeVolume(delta) {
+  if (!player || !isPowerOn || !player.setVolume || !player.getVolume) return;
+
+  const nextVolume = Math.max(0, Math.min(100, player.getVolume() + delta));
+  player.setVolume(nextVolume);
+
+  if (nextVolume > 0 && isMuted && player.unMute) {
+    isMuted = false;
+    player.unMute();
+    syncMuteUI();
+  }
+}
+
 function initRemoteEvents() {
-  const btnPower = document.getElementById('btnPower');
-  const btnNext = document.getElementById('btnChannelNext');
-  const btnPrev = document.getElementById('btnChannelPrev');
-  const btnVolUp = document.getElementById('btnVolUp');
-  const btnVolDown = document.getElementById('btnVolDown');
-  const btnMute = document.getElementById('btnMute');
-  const btnRandom = document.getElementById('btnRandom');
+  const btnPower = document.getElementById("btnPower");
+  const btnNext = document.getElementById("btnChannelNext");
+  const btnPrev = document.getElementById("btnChannelPrev");
+  const btnVolUp = document.getElementById("btnVolUp");
+  const btnVolDown = document.getElementById("btnVolDown");
+  const btnMute = document.getElementById("btnMute");
+  const btnRandom = document.getElementById("btnRandom");
 
-  if (btnPower) btnPower.addEventListener('click', togglePower);
-  if (btnNext) btnNext.addEventListener('click', () => changeChannel(1));
-  if (btnPrev) btnPrev.addEventListener('click', () => changeChannel(-1));
+  syncPowerUI();
+  syncMuteUI();
+  syncRandomUI();
 
-  if (btnVolUp) {
-    btnVolUp.addEventListener('click', () => {
-      if (player && isPowerOn && player.setVolume) {
-        player.setVolume(Math.min(player.getVolume() + 10, 100));
-      }
-    });
-  }
+  btnPower?.addEventListener("click", () => {
+    setPressedFeedback(btnPower);
+    togglePower();
+  });
 
-  if (btnVolDown) {
-    btnVolDown.addEventListener('click', () => {
-      if (player && isPowerOn && player.setVolume) {
-        player.setVolume(Math.max(player.getVolume() - 10, 0));
-      }
-    });
-  }
+  btnNext?.addEventListener("click", () => {
+    setPressedFeedback(btnNext);
+    changeChannel(1);
+  });
 
-  if (btnMute) {
-    btnMute.addEventListener('click', () => {
-      if (player && isPowerOn && player.mute) {
-        isMuted = !isMuted;
-        if (isMuted) player.mute();
-        else player.unMute();
-      }
-    });
-  }
+  btnPrev?.addEventListener("click", () => {
+    setPressedFeedback(btnPrev);
+    changeChannel(-1);
+  });
 
-  if (btnRandom) {
-    if (isRandom) {
-      btnRandom.classList.add('active');
-      btnRandom.innerText = 'RND: ON';
+  btnVolUp?.addEventListener("click", () => {
+    setPressedFeedback(btnVolUp);
+    changeVolume(10);
+  });
+
+  btnVolDown?.addEventListener("click", () => {
+    setPressedFeedback(btnVolDown);
+    changeVolume(-10);
+  });
+
+  btnMute?.addEventListener("click", () => {
+    setPressedFeedback(btnMute);
+
+    if (!player || !isPowerOn || !player.mute || !player.unMute) return;
+
+    isMuted = !isMuted;
+
+    if (isMuted) {
+      player.mute();
     } else {
-      btnRandom.classList.remove('active');
-      btnRandom.innerText = 'RND: OFF';
+      player.unMute();
     }
-    btnRandom.addEventListener('click', () => {
-      isRandom = !isRandom;
-      if (isRandom) {
-        btnRandom.classList.add('active');
-        btnRandom.innerText = 'RND: ON';
-      } else {
-        btnRandom.classList.remove('active');
-        btnRandom.innerText = 'RND: OFF';
-      }
-      if (isPowerOn) showChannelOSD();
-    });
-  }
+
+    syncMuteUI();
+  });
+
+  btnRandom?.addEventListener("click", () => {
+    setPressedFeedback(btnRandom);
+    isRandom = !isRandom;
+    syncRandomUI();
+
+    if (isPowerOn) {
+      showChannelOSD();
+    }
+  });
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initRemoteEvents);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initRemoteEvents);
 } else {
   initRemoteEvents();
 }
