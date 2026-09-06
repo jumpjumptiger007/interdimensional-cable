@@ -11,7 +11,7 @@ let player = null;
 let currentChannelIndex = 0;
 let isPowerOn = false;
 let isMuted = false;
-let isRandom = false; // 随机起点开关
+let isRandom = true; // 随机起点开关（默认开启）
 let osdTimer = null;
 
 // 1. 纯粹断点记忆库：只记录离开时的精准秒数 (例: { "dQw4w9WgXcQ": 42 })
@@ -146,7 +146,7 @@ function tryInitPlayer() {
     videoId: videoList[currentChannelIndex],
     playerVars: {
       'autoplay': 0,
-      'controls': 1,
+      'controls': 0,
       'disablekb': 1,
       'modestbranding': 1,
       'rel': 0,
@@ -306,6 +306,13 @@ function initRemoteEvents() {
   }
 
   if (btnRandom) {
+    if (isRandom) {
+      btnRandom.classList.add('active');
+      btnRandom.innerText = 'RND: ON';
+    } else {
+      btnRandom.classList.remove('active');
+      btnRandom.innerText = 'RND: OFF';
+    }
     btnRandom.addEventListener('click', () => {
       isRandom = !isRandom;
       if (isRandom) {
