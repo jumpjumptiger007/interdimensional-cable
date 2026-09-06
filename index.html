@@ -5,41 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Interdimensional Cable</title>
   <link rel="icon" href="favicon.png" type="image/png">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 
-  <div class="tv-container">
-    <!-- 电视屏幕区域 -->
-    <div class="tv-screen" id="tvScreen">
-      <!-- 雪花屏 Canvas (换台/关机时渲染) -->
-      <canvas id="noiseCanvas"></canvas>
-      <!-- 关机黑屏遮罩 -->
-      <div class="power-off-overlay" id="powerOverlay"></div>
-      <!-- YouTube 播放器嵌入点 -->
-      <div id="player"></div>
-    </div>
+  <div class="room">
+    <div class="tv-container">
+      <!-- 电视屏幕区域 -->
+      <div class="tv-screen" id="tvScreen">
+        <!-- 雪花屏 Canvas (换台/关机时渲染) -->
+        <canvas id="noiseCanvas"></canvas>
+        <!-- 关机黑屏遮罩 -->
+        <div class="power-off-overlay" id="powerOverlay"></div>
+        <!-- YouTube 播放器嵌入点 -->
+        <div id="player"></div>
+        <!-- 复古荧光台号 OSD -->
+        <div class="channel-display" id="channelDisplay">CH 01</div>
+        <!-- 电视品牌标签 -->
+        <div class="brand">
+          <span class="brand-name">INTERDIMENSIONAL</span>
+          <span class="brand-sub">CABLE</span>
+          <span class="brand-light" id="powerLed"></span>
+        </div>
+        <!-- CRT 扫描线 / 玻璃反光 -->
+        <div class="scanlines"></div>
+        <div class="screen-glare"></div>
+      </div>
 
-    <!-- 简易遥控器 UI (后续可根据背景图片调整位置) -->
-    <div class="remote-control">
-      <div class="remote-title">REMOTE</div>
-      <button class="btn btn-power" id="btnPower">PWR</button>
-      <div class="remote-row">
-        <button class="btn" id="btnChannelNext">CH +</button>
-        <button class="btn" id="btnChannelPrev">CH -</button>
+      <!-- 遥控器 -->
+      <div class="remote-control">
+        <div class="remote-title">REMOTE</div>
+        <button class="btn btn-power" id="btnPower">PWR</button>
+        <div class="remote-label">CHANNEL</div>
+        <div class="remote-row">
+          <button class="btn" id="btnChannelNext">CH +</button>
+          <button class="btn" id="btnChannelPrev">CH -</button>
+        </div>
+        <div class="remote-label">VOLUME</div>
+        <div class="remote-row">
+          <button class="btn" id="btnVolUp">VOL +</button>
+          <button class="btn" id="btnVolDown">VOL -</button>
+        </div>
+        <button class="btn btn-mute" id="btnMute">MUTE</button>
+        <button class="btn btn-rnd" id="btnRandom">RND: OFF</button>
       </div>
-      <div class="remote-row">
-        <button class="btn" id="btnVolUp">VOL +</button>
-        <button class="btn" id="btnVolDown">VOL -</button>
-      </div>
-      <button class="btn btn-mute" id="btnMute">MUTE</button>
-      <!-- 💡 新增：随机切台开关按钮 -->
-      <button class="btn btn-rnd" id="btnRandom">RND: OFF</button>
     </div>
   </div>
 
   <!-- 引入 YouTube IFrame Player API -->
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
