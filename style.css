@@ -580,16 +580,6 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 .brand-mark i:nth-child(2) { background: #d28c2e; }
 .brand-mark i:nth-child(3) { background: #75833b; }
 
-.model-label {
-  justify-self: end;
-  align-self: end;
-  padding-bottom: 5px;
-  color: #a89c8e;
-  font: 600 clamp(7px, .62vw, 9px)/1.1 "Courier New", monospace;
-  letter-spacing: .09em;
-  text-align: right;
-}
-
 .tv-feet {
   display: flex;
   justify-content: space-between;
@@ -659,10 +649,10 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   align-items: baseline;
   padding: 0 3px;
   color: #c4bbad;
-  font: 700 10px/1 "Courier New", monospace;
+  font: 700 13px/1 "Courier New", monospace;
   letter-spacing: .13em;
 }
-.remote-title { font-size: 13px; color: #e0d4bd; }
+.remote-title { font-size: 17px; color: #e0d4bd; }
 .remote-model { opacity: .6; }
 
 .remote-btn {
@@ -742,7 +732,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 
 .remote-label {
   color: #c0b6a6;
-  font: 700 clamp(9px, .73vw, 11px)/1 "Courier New", monospace;
+  font: 700 clamp(13px, 1.05vw, 15px)/1 "Courier New", monospace;
   letter-spacing: .15em;
 }
 
@@ -767,7 +757,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   display: grid;
   place-items: center;
   color: #aca394;
-  font: 700 10px/1 "Courier New", monospace;
+  font: 700 13px/1 "Courier New", monospace;
   background: linear-gradient(180deg, #1b1917, #11100f);
   box-shadow: inset 0 0 5px rgba(0,0,0,.7);
 }
@@ -795,7 +785,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 .remote-btn--small {
   min-height: 35px;
   border-radius: 9px;
-  font-size: 19px;
+  font-size: 23px;
   font-weight: 500;
   line-height: 1;
 }
@@ -811,7 +801,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 .remote-btn--utility.active { color: #fff0bf; background: linear-gradient(180deg, #78623b, #3d301e); }
 .remote-btn--utility { min-height: 31px; color: #a9a197; font-size: clamp(7px, .6vw, 8px); opacity: .82; }
 .remote-btn--utility:hover, .remote-btn--utility:focus-visible { opacity: 1; }
-.remote-btn--room { width: 86%; min-height: 29px; border-radius: 8px; color: #b9ae9b; font: 700 8px/1 "Courier New", monospace; letter-spacing: .08em; background: linear-gradient(180deg, #302d29, #1c1a18); }
+.remote-btn--room { width: 86%; min-height: 29px; border-radius: 8px; color: #b9ae9b; font: 700 11px/1 "Courier New", monospace; letter-spacing: .08em; background: linear-gradient(180deg, #302d29, #1c1a18); }
 
 .room:fullscreen { width: 100%; height: 100%; background: var(--room-black); }
 .room:fullscreen .console {
@@ -873,7 +863,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 .remote-btn--random {
   min-height: 37px;
   border-radius: 10px;
-  font: 700 clamp(7px, .65vw, 9px)/1 "Courier New", monospace;
+  font: 700 clamp(11px, .95vw, 13px)/1 "Courier New", monospace;
   letter-spacing: .05em;
 }
 .remote-btn--utility {
@@ -883,7 +873,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   gap: 4px;
   color: #c6b994;
 }
-.mute-icon { font-size: 12px; }
+.mute-icon { font-size: 16px; }
 
 .remote-btn--random {
   color: #d7e2b5;
@@ -907,31 +897,6 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   background: linear-gradient(180deg, #5d4b2d, #33291d);
 }
 
-.remote-footer {
-  margin-top: auto;
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-  color: #a99f91;
-  font: 700 7px/1 "Courier New", monospace;
-  letter-spacing: .1em;
-}
-.remote-footer strong {
-  color: #d2bf9f;
-  font-size: 8px;
-  letter-spacing: .18em;
-}
-
-.room-caption {
-  position: absolute;
-  right: max(20px, 3vw);
-  bottom: max(16px, env(safe-area-inset-bottom));
-  color: rgba(190,177,161,.23);
-  font: 600 clamp(7px, .6vw, 9px)/1 "Courier New", monospace;
-  letter-spacing: .16em;
-  pointer-events: none;
-}
-
 /* Tablet */
 @media (max-width: 900px) {
   .console {
@@ -946,10 +911,6 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 
   .tv-lower-panel {
     grid-template-columns: 1fr auto;
-  }
-
-  .model-label {
-    display: none;
   }
 }
 
@@ -1056,7 +1017,6 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   }
 
   .remote-header,
-  .remote-footer,
   .remote-label {
     display: none;
   }
@@ -1135,16 +1095,12 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   }
 
   .remote-btn--utility,
-  .remote-btn--random { min-height: 36px; font-size: 7px; }
+  .remote-btn--random { min-height: 36px; font-size: 10px; }
   .remote-btn--room { grid-column: 1 / -1; width: 100%; min-height: 34px; }
 
   .remote-btn--utility,
   .remote-btn--random {
     min-height: 32px;
-  }
-
-  .room-caption {
-    display: none;
   }
 
   .page-help { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 38px; height: 38px; }
