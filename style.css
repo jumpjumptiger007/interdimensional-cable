@@ -419,6 +419,24 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   filter: blur(2px);
 }
 
+/* FILTER off: keep the tube shape but strip effects that dim or soften the picture. */
+.tv-screen.filters-off .scanlines,
+.tv-screen.filters-off .crt-vignette,
+.tv-screen.filters-off .screen-glare,
+.tv-screen.filters-off .glass-reflection {
+  display: none;
+}
+.tv-screen.filters-off {
+  box-shadow: 0 0 12px rgba(0,0,0,.85);
+}
+.tv-screen.filters-off::before {
+  box-shadow: none;
+}
+.tv-screen.filters-off #player,
+.tv-screen.powered-on.filters-off #player {
+  filter: none;
+}
+
 .tv-controls {
   position: relative;
   min-width: 0;
@@ -1112,7 +1130,7 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
     grid-column: 1 / -1;
     grid-row: 4;
     width: 100%;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 7px;
   }
 
