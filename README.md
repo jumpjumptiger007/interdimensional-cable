@@ -1,4 +1,4 @@
-# Retro Signal TV
+# InterDemTV by Adrian
 
 A non-commercial personal experiment: a single-screen retro television and physical remote that tune through YouTube video IDs. Videos remain hosted by YouTube and belong to their respective owners.
 
