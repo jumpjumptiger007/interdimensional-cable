@@ -25,6 +25,11 @@ jobs:
       - name: Fetch Latest Videos
         run: python scripts/fetch_reddit.py
 
+      - name: Validate available videos
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/validate_videos.py
+
       - name: Commit and push if changed
         run: |
           git config --global user.name 'github-actions[bot]'

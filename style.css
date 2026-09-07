@@ -29,14 +29,18 @@ body {
   min-height: 100%;
 }
 
+body[data-ambience="dark"] { --room-black: #050505; background: linear-gradient(180deg, #151515 0 62%, #050505 63% 100%); }
+body[data-ambience="warm"] { --room-black: #160a04; background: linear-gradient(90deg, #29140a, #4a2613 72%, #1b0b05); }
+body[data-ambience="basement"] { --room-black: #050908; background: linear-gradient(180deg, #303936 0 61%, #101715 62% 100%); }
+body[data-ambience="blackout"] { --room-black: #000; background: #000; }
+
 body {
   min-height: 100dvh;
   color: #f4eee5;
   font-family: "SF Pro Display", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
   background:
-    radial-gradient(circle at 49% 42%, rgba(93, 50, 24, 0.2), transparent 34%),
-    radial-gradient(circle at 18% 18%, rgba(131, 74, 35, 0.09), transparent 25%),
-    linear-gradient(180deg, #100c0a 0%, var(--room-black) 72%, #030303 100%);
+    radial-gradient(circle at 49% 42%, rgba(120, 128, 124, .08), transparent 34%),
+    linear-gradient(180deg, #151515 0 62%, var(--room-black) 63% 100%);
   overflow-x: hidden;
 }
 
@@ -51,7 +55,7 @@ button {
   display: grid;
   place-items: center;
   padding:
-    max(22px, env(safe-area-inset-top))
+    max(14px, env(safe-area-inset-top))
     max(18px, env(safe-area-inset-right))
     max(20px, env(safe-area-inset-bottom))
     max(18px, env(safe-area-inset-left));
@@ -63,10 +67,10 @@ button {
   position: absolute;
   z-index: -5;
   inset: 0;
-  opacity: 0.28;
+  opacity: .22;
   background:
-    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.025) 50%, transparent 50.2%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 4px);
+    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.03) 50%, transparent 50.2%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 5px);
   pointer-events: none;
 }
 
@@ -79,8 +83,8 @@ button {
   bottom: -18vh;
   height: 42vh;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(108, 55, 24, .22), transparent 62%),
-    linear-gradient(180deg, #120c09, #050403);
+    radial-gradient(ellipse at 50% 0%, rgba(160, 170, 165, .09), transparent 58%),
+    linear-gradient(180deg, #111, #030303);
   transform: perspective(700px) rotateX(64deg);
   transform-origin: top;
   pointer-events: none;
@@ -92,12 +96,45 @@ button {
   width: min(80vw, 1180px);
   aspect-ratio: 1.6;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(193, 103, 47, .14), rgba(20, 12, 8, 0) 68%);
+  background: radial-gradient(ellipse, rgba(126, 157, 146, .14), rgba(15, 18, 17, 0) 68%);
   filter: blur(32px);
   transition: opacity .35s ease, filter .35s ease;
   opacity: .55;
   pointer-events: none;
 }
+
+body[data-ambience="warm"] .room::before {
+  opacity: .62;
+  background:
+    radial-gradient(circle at 88% 27%, rgba(255, 177, 82, .42), transparent 18%),
+    repeating-linear-gradient(90deg, rgba(255, 220, 164, .025) 0 2px, transparent 2px 76px),
+    linear-gradient(90deg, transparent 0 64%, rgba(255, 157, 58, .14) 100%);
+}
+body[data-ambience="warm"] .room::after {
+  background:
+    repeating-linear-gradient(93deg, transparent 0 48px, rgba(255, 184, 105, .055) 49px 51px),
+    radial-gradient(ellipse at 76% 0%, rgba(255, 152, 60, .4), transparent 38%),
+    linear-gradient(180deg, #512711, #170904);
+}
+body[data-ambience="warm"] .room-glow { left: 22%; opacity: .95; background: radial-gradient(ellipse, rgba(255, 135, 46, .38), transparent 66%); }
+body[data-ambience="basement"] .room::before {
+  opacity: .68;
+  background:
+    radial-gradient(circle at 50% -4%, rgba(191, 218, 205, .22), transparent 28%),
+    repeating-radial-gradient(circle at 18% 26%, rgba(255,255,255,.025) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(87deg, transparent 0 109px, rgba(8, 16, 14, .12) 110px 111px);
+}
+body[data-ambience="basement"] .room::after {
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(131, 153, 145, .06) 50%, transparent 50.3%),
+    repeating-linear-gradient(96deg, transparent 0 86px, rgba(0,0,0,.13) 87px 89px),
+    linear-gradient(180deg, #202c29, #070b0a 78%);
+}
+body[data-ambience="basement"] .room-glow { top: 7%; opacity: .58; background: radial-gradient(ellipse, rgba(133, 183, 166, .24), transparent 62%); }
+body[data-ambience="blackout"] .room::before,
+body[data-ambience="blackout"] .room::after { opacity: 0; }
+body[data-ambience="blackout"] .room-glow { opacity: .03; background: radial-gradient(ellipse, rgba(131, 180, 163, .2), transparent 58%); }
+body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opacity: .55; }
 
 .room:has(.tv-screen.powered-on) .room-glow {
   opacity: 1;
@@ -105,10 +142,10 @@ button {
 }
 
 .console {
-  width: min(1180px, 94vw);
+  width: min(1320px, 97vw);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(118px, 12vw, 152px);
-  gap: clamp(20px, 3vw, 42px);
+  grid-template-columns: minmax(0, 1fr) clamp(158px, 14vw, 190px);
+  gap: clamp(20px, 2.7vw, 38px);
   align-items: end;
   filter: drop-shadow(0 42px 42px rgba(0,0,0,.48));
 }
@@ -126,6 +163,7 @@ button {
   border: 1px solid rgba(255,255,255,.07);
   border-radius: clamp(24px, 2.6vw, 35px) clamp(20px, 2.3vw, 31px) clamp(26px, 3vw, 40px) clamp(26px, 3vw, 40px);
   background:
+    repeating-linear-gradient(23deg, rgba(255,255,255,.012) 0 1px, transparent 1px 5px),
     linear-gradient(90deg, rgba(122,66,30,.13), transparent 12% 87%, rgba(84,45,23,.13)),
     linear-gradient(180deg, #29231f 0%, #171411 58%, #100e0c 100%);
   box-shadow:
@@ -135,6 +173,7 @@ button {
     0 20px 18px rgba(0,0,0,.4),
     0 56px 90px rgba(0,0,0,.42);
 }
+
 
 .tv-shell::before,
 .tv-shell::after {
@@ -210,6 +249,27 @@ button {
   transform: translateZ(0);
 }
 
+.tv-screen.powering-on { animation: crt-power-on .52s ease-out both; }
+.tv-screen.powering-off { animation: crt-power-off .38s ease-in both; }
+.tv-screen.transitioning::after {
+  content: "";
+  position: absolute;
+  z-index: 14;
+  inset: 0;
+  pointer-events: none;
+  animation: channel-transition .39s ease-out both;
+  background: rgba(255,255,255,.08);
+}
+.tv-screen[data-transition="sync-tear"]::after { background: repeating-linear-gradient(0deg, transparent 0 11%, rgba(220,240,237,.3) 12% 13%, transparent 14% 24%); transform: translateX(-8%); }
+.tv-screen[data-transition="vertical-roll"]::after { background: linear-gradient(180deg, transparent 0 25%, rgba(230,255,243,.32) 45%, transparent 67%); }
+.tv-screen[data-transition="flash"]::after { background: #e8fff0; }
+.tv-screen[data-transition="rgb-split"] #player { filter: saturate(1.2) contrast(1.2) drop-shadow(3px 0 #c33) drop-shadow(-3px 0 #3cd); }
+.tv-screen[data-transition="black-snap"]::after { background: #000; }
+.tv-screen.no-signal #player { opacity: 0; }
+@keyframes crt-power-on { 0% { transform: scaleY(.01); filter: brightness(2.4); } 28% { transform: scaleY(.04); } 58% { transform: scaleY(1.04); filter: brightness(1.65); } 100% { transform: scaleY(1); filter: none; } }
+@keyframes crt-power-off { 0% { transform: scaleY(1); filter: brightness(1.25); } 72% { transform: scaleY(.025); filter: brightness(2.4); } 100% { transform: scaleY(.01); filter: brightness(0); } }
+@keyframes channel-transition { 0% { opacity: .9; transform: translateY(-4%); } 100% { opacity: 0; transform: translateY(5%); } }
+
 .tv-screen::before {
   content: "";
   position: absolute;
@@ -217,10 +277,10 @@ button {
   inset: 0;
   border-radius: inherit;
   box-shadow:
-    inset 10px 0 24px rgba(0,0,0,.6),
-    inset -10px 0 24px rgba(0,0,0,.6),
-    inset 0 10px 23px rgba(0,0,0,.55),
-    inset 0 -13px 27px rgba(0,0,0,.7);
+    inset 10px 0 24px rgba(0,0,0,.44),
+    inset -10px 0 24px rgba(0,0,0,.44),
+    inset 0 10px 23px rgba(0,0,0,.38),
+    inset 0 -13px 27px rgba(0,0,0,.53);
   pointer-events: none;
 }
 
@@ -228,13 +288,15 @@ button {
   position: absolute;
   z-index: 1;
   inset: -1.7%;
-  transition: filter .25s ease, transform .25s ease;
-  filter: saturate(.9) contrast(1.06) brightness(.86);
+  opacity: 1;
+  pointer-events: none;
+  transition: filter .25s ease, transform .25s ease, opacity .08s linear;
+  filter: saturate(.92) contrast(1.04) brightness(.95);
   transform: scale(1.015);
 }
 
 .tv-screen.powered-on #player {
-  filter: saturate(.93) contrast(1.06) brightness(.98);
+  filter: saturate(.96) contrast(1.04) brightness(1.06);
 }
 
 #player,
@@ -242,7 +304,11 @@ button {
   width: 100%;
   height: 100%;
   border: 0;
+  pointer-events: none;
 }
+
+.tv-screen.transitioning #player,
+.tv-screen.no-signal #player { opacity: 0; }
 
 #noiseCanvas {
   position: absolute;
@@ -328,7 +394,7 @@ button {
 
 .crt-vignette {
   z-index: 7;
-  background: radial-gradient(ellipse at center, transparent 48%, rgba(0,0,0,.18) 72%, rgba(0,0,0,.58) 100%);
+  background: radial-gradient(ellipse at center, transparent 53%, rgba(0,0,0,.12) 75%, rgba(0,0,0,.43) 100%);
 }
 
 .screen-glare {
@@ -383,8 +449,8 @@ button {
 }
 
 .hardware-label {
-  color: #70655a;
-  font-size: clamp(6px, .55vw, 8px);
+  color: #afa493;
+  font-size: clamp(8px, .67vw, 10px);
   font-weight: 700;
   letter-spacing: .18em;
 }
@@ -467,13 +533,13 @@ button {
   white-space: nowrap;
 }
 .brand-name {
-  color: #ae8f68;
-  font-size: clamp(6px, .67vw, 9px);
+  color: #dac29a;
+  font-size: clamp(8px, .78vw, 11px);
   letter-spacing: .12em;
 }
 .brand-sub {
-  color: #cfb083;
-  font-size: clamp(7px, .75vw, 10px);
+  color: #f0d4a3;
+  font-size: clamp(8px, .82vw, 12px);
   font-weight: 800;
   letter-spacing: .15em;
 }
@@ -495,8 +561,8 @@ button {
   justify-self: end;
   align-self: end;
   padding-bottom: 5px;
-  color: #4d4640;
-  font: 600 clamp(5px, .5vw, 7px)/1.1 "Courier New", monospace;
+  color: #a89c8e;
+  font: 600 clamp(7px, .62vw, 9px)/1.1 "Courier New", monospace;
   letter-spacing: .09em;
   text-align: right;
 }
@@ -569,11 +635,11 @@ button {
   justify-content: space-between;
   align-items: baseline;
   padding: 0 3px;
-  color: #7a746b;
-  font: 700 8px/1 "Courier New", monospace;
+  color: #c4bbad;
+  font: 700 10px/1 "Courier New", monospace;
   letter-spacing: .13em;
 }
-.remote-title { font-size: 10px; color: #9e927f; }
+.remote-title { font-size: 13px; color: #e0d4bd; }
 .remote-model { opacity: .6; }
 
 .remote-btn {
@@ -652,8 +718,8 @@ button {
 }
 
 .remote-label {
-  color: #7d756a;
-  font: 700 clamp(7px, .65vw, 9px)/1 "Courier New", monospace;
+  color: #c0b6a6;
+  font: 700 clamp(9px, .73vw, 11px)/1 "Courier New", monospace;
   letter-spacing: .15em;
 }
 
@@ -718,6 +784,63 @@ button {
   gap: 8px;
   margin-top: 2px;
 }
+.remote-btn--skip { color: #e4b1a8; }
+.remote-btn--utility.active { color: #fff0bf; background: linear-gradient(180deg, #78623b, #3d301e); }
+.remote-btn--utility { min-height: 31px; color: #a9a197; font-size: clamp(7px, .6vw, 8px); opacity: .82; }
+.remote-btn--utility:hover, .remote-btn--utility:focus-visible { opacity: 1; }
+.remote-btn--room { width: 86%; min-height: 29px; border-radius: 8px; color: #b9ae9b; font: 700 8px/1 "Courier New", monospace; letter-spacing: .08em; background: linear-gradient(180deg, #302d29, #1c1a18); }
+
+.room:fullscreen { width: 100%; height: 100%; background: var(--room-black); }
+.room:fullscreen .console { width: min(1180px, 94vw); }
+
+.page-help {
+  position: fixed;
+  z-index: 30;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(222, 199, 156, .36);
+  border-radius: 50%;
+  color: #e7d7ba;
+  background: linear-gradient(145deg, rgba(55, 51, 45, .94), rgba(20, 19, 17, .96));
+  box-shadow: inset 0 1px rgba(255,255,255,.1), 0 5px 16px rgba(0,0,0,.42);
+  font: 700 18px/1 "Courier New", monospace;
+  cursor: pointer;
+}
+.page-help:hover { filter: brightness(1.16); }
+.page-help:focus-visible { outline: 2px solid rgba(235, 205, 147, .85); outline-offset: 3px; }
+
+.help-modal {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, .72);
+  backdrop-filter: blur(7px);
+}
+.help-modal[hidden] { display: none; }
+.help-modal__panel {
+  position: relative;
+  width: min(660px, 100%);
+  padding: clamp(25px, 4vw, 42px);
+  border: 1px solid rgba(224, 196, 145, .3);
+  border-radius: 18px;
+  color: #e9e0d2;
+  background: linear-gradient(145deg, #2a2722, #12110f);
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 28px 80px rgba(0,0,0,.65);
+}
+.help-modal__eyebrow { color: #d6b37a; font: 700 11px/1 "Courier New", monospace; letter-spacing: .16em; }
+.help-modal h1 { margin: 10px 0 25px; font-size: clamp(26px, 4vw, 38px); letter-spacing: -.03em; }
+.help-modal__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.help-modal h2 { margin-bottom: 10px; color: #e6c993; font: 700 12px/1 "Courier New", monospace; letter-spacing: .08em; }
+.help-modal p { margin: 0 0 9px; color: #cdc5b9; font-size: 14px; line-height: 1.35; }
+.help-modal b { color: #fff1d2; }
+.help-modal__close { position: absolute; top: 12px; right: 14px; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.15); border-radius: 50%; color: #eee4d5; background: #27231f; font-size: 24px; cursor: pointer; }
+
+@media (max-width: 720px) { .help-modal__grid { grid-template-columns: 1fr; gap: 12px; } }
 .remote-btn--utility,
 .remote-btn--random {
   min-height: 37px;
@@ -761,13 +884,13 @@ button {
   display: grid;
   justify-items: center;
   gap: 2px;
-  color: #746a5c;
-  font: 700 6px/1 "Courier New", monospace;
+  color: #a99f91;
+  font: 700 7px/1 "Courier New", monospace;
   letter-spacing: .1em;
 }
 .remote-footer strong {
-  color: #9b886e;
-  font-size: 7px;
+  color: #d2bf9f;
+  font-size: 8px;
   letter-spacing: .18em;
 }
 
@@ -976,12 +1099,16 @@ button {
   }
 
   .remote-actions {
-    grid-column: 4;
-    grid-row: 2;
+    grid-column: 1 / -1;
+    grid-row: 4;
     width: 100%;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 7px;
   }
+
+  .remote-btn--utility,
+  .remote-btn--random { min-height: 36px; font-size: 7px; }
+  .remote-btn--room { grid-column: 1 / -1; width: 100%; min-height: 34px; }
 
   .remote-btn--utility,
   .remote-btn--random {
@@ -991,6 +1118,8 @@ button {
   .room-caption {
     display: none;
   }
+
+  .page-help { top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 38px; height: 38px; }
 }
 
 @media (max-width: 410px) {
