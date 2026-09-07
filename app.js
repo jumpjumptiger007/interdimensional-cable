@@ -1,6 +1,6 @@
 // Retro Signal TV: a small, static YouTube channel receiver.
 let videoList = ["dQw4w9WgXcQ", "L_LUpnjgPso", "9bZkp7q19f0", "w4m6N7Zk-yM", "fC7oUOUEEi4"];
-let player, currentChannelIndex = 0, isPowerOn = false, isMuted = false, isRandom = true;
+let player, currentChannelIndex = 0, isPowerOn = false, isMuted = false, isRandom = true, isFilterOn = true;
 let apiReady = false, listReady = false, playerRequested = false, osdTimer, noiseInterval, audioCtx;
 const STORAGE_KEY = "retro-signal-tv-state-v1", MAX_CHANNEL_ATTEMPTS = 120;
 const invalidVideoIds = new Set(), blockedVideoIds = new Set(), favoriteVideoIds = new Set();
@@ -69,6 +69,8 @@ function syncPowerUI() { document.getElementById("tvScreen")?.classList.toggle("
 function togglePower() { isPowerOn = !isPowerOn; playClick("power"); buzz(); syncPowerUI(); const screen = document.getElementById("tvScreen"); if (isPowerOn) { screen?.classList.remove("no-signal"); screen?.classList.add("powering-on"); requestPlayer(); startNoise(); showChannelOSD(); setTimeout(() => { screen?.classList.remove("powering-on"); tryInitPlayer(); player?.playVideo?.(); endTransition(); }, 520); } else { saveCurrentPlaybackPosition(); persistState(); screen?.classList.add("powering-off"); player?.pauseVideo?.(); setTimeout(() => { stopNoise(); screen?.classList.remove("powering-off"); syncPowerUI(); }, 380); } }
 function syncMuteUI() { const button = document.getElementById("btnMute"); button?.classList.toggle("active", isMuted); button?.setAttribute("aria-pressed", String(isMuted)); }
 function syncRandomUI() { const button = document.getElementById("btnRandom"); if (!button) return; button.classList.toggle("active", isRandom); button.setAttribute("aria-pressed", String(isRandom)); button.textContent = isRandom ? "RND" : "SEQ"; }
+function syncFilterUI() { document.getElementById("tvScreen")?.classList.toggle("filters-off", !isFilterOn); const button = document.getElementById("btnFilter"); button?.classList.toggle("active", isFilterOn); button?.setAttribute("aria-pressed", String(isFilterOn)); }
+function toggleFilter() { isFilterOn = !isFilterOn; syncFilterUI(); }
 function syncFavoriteUI() { const button = document.getElementById("btnFavorite"), active = favoriteVideoIds.has(videoList[currentChannelIndex]); button?.classList.toggle("active", active); button?.setAttribute("aria-pressed", String(active)); }
 function changeVolume(delta) { if (!player || !isPowerOn) return; player.setVolume(Math.max(0, Math.min(100, player.getVolume() + delta))); if (delta > 0 && isMuted) { isMuted = false; player.unMute?.(); syncMuteUI(); } persistState(); }
 function setPressedFeedback(button) { button?.classList.add("is-pressed"); setTimeout(() => button?.classList.remove("is-pressed"), 105); buzz(); }
@@ -82,12 +84,12 @@ function openHelp() { const modal = document.getElementById("helpModal"); if (!m
 function closeHelp() { document.getElementById("helpModal")?.setAttribute("hidden", ""); document.getElementById("btnHelp")?.focus(); }
 function isEditable(target) { return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable; }
 function initRemoteEvents() {
-  readStoredState(); syncPowerUI(); syncMuteUI(); syncRandomUI(); syncFavoriteUI(); syncFullscreenControl();
+  readStoredState(); syncPowerUI(); syncMuteUI(); syncRandomUI(); syncFilterUI(); syncFavoriteUI(); syncFullscreenControl();
   const bind = (id, handler) => document.getElementById(id)?.addEventListener("click", event => { setPressedFeedback(event.currentTarget); handler(); });
   bind("btnPower", togglePower); bind("btnChannelNext", () => changeChannel(1)); bind("btnChannelPrev", () => changeChannel(-1)); bind("btnVolUp", () => changeVolume(10)); bind("btnVolDown", () => changeVolume(-10));
-  bind("btnMute", () => { if (!player || !isPowerOn) return; isMuted = !isMuted; isMuted ? player.mute?.() : player.unMute?.(); syncMuteUI(); persistState(); }); bind("btnRandom", () => { isRandom = !isRandom; syncRandomUI(); persistState(); if (isPowerOn) showChannelOSD(); }); bind("btnFullscreen", toggleFullscreen); bind("btnFavorite", toggleFavorite); bind("btnSkip", blockCurrentVideo); bind("btnRoom", cycleAmbience); bind("btnHelp", openHelp); document.getElementById("btnHelpClose")?.addEventListener("click", closeHelp);
+  bind("btnMute", () => { if (!player || !isPowerOn) return; isMuted = !isMuted; isMuted ? player.mute?.() : player.unMute?.(); syncMuteUI(); persistState(); }); bind("btnRandom", () => { isRandom = !isRandom; syncRandomUI(); persistState(); if (isPowerOn) showChannelOSD(); }); bind("btnFilter", toggleFilter); bind("btnFullscreen", toggleFullscreen); bind("btnFavorite", toggleFavorite); bind("btnSkip", blockCurrentVideo); bind("btnRoom", cycleAmbience); bind("btnHelp", openHelp); document.getElementById("btnHelpClose")?.addEventListener("click", closeHelp);
   document.getElementById("helpModal")?.addEventListener("click", event => { if (event.target.id === "helpModal") closeHelp(); }); document.addEventListener("fullscreenchange", syncFullscreenControl); document.addEventListener("visibilitychange", () => { if (document.hidden) stopNoise(); });
   document.addEventListener("keydown", event => { if (isEditable(event.target) || event.metaKey || event.ctrlKey || event.altKey) return; if (event.key === "Escape") return closeHelp(); const controls = { ArrowUp: ["btnChannelNext", () => changeChannel(1)], ArrowDown: ["btnChannelPrev", () => changeChannel(-1)], ArrowLeft: ["btnVolDown", () => changeVolume(-10)], ArrowRight: ["btnVolUp", () => changeVolume(10)], " ": ["btnPower", togglePower], m: ["btnMute", () => document.getElementById("btnMute")?.click()], f: ["btnFullscreen", toggleFullscreen], "?": ["btnHelp", openHelp] }; const entry = controls[event.key.toLowerCase()] || controls[event.key]; if (!entry) return; event.preventDefault(); setPressedFeedback(document.getElementById(entry[0])); entry[1](); });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=5").catch(() => {}); loadVideoList();
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=6").catch(() => {}); loadVideoList();
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initRemoteEvents) : initRemoteEvents();
