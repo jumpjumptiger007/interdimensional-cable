@@ -607,7 +607,10 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
   position: relative;
   width: 100%;
   min-height: clamp(370px, 47vw, 520px);
-  padding: clamp(16px, 1.7vw, 21px) clamp(12px, 1.3vw, 17px) clamp(15px, 1.6vw, 20px);
+  /* Bottom padding reserves the vertical footprint the removed footer label used to
+     occupy, keeping the remote (and therefore the console/TV/remote bottoms) at their
+     pre-cleanup height so the set stays anchored to the page bottom. */
+  padding: clamp(16px, 1.7vw, 21px) clamp(12px, 1.3vw, 17px) clamp(39px, 2.9vw, 40px);
   display: flex;
   flex-direction: column;
   align-items: center;
