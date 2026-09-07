@@ -5,9 +5,8 @@ import time
 import urllib.request
 import xml.etree.ElementTree as ET
 
-# 默认内容池：以「跨次元电视 / 诡异短片」为主，可按需用环境变量覆盖
+# 默认内容池：以怪诞短片和模拟风格内容为主，可按需用环境变量覆盖
 DEFAULT_SUBREDDITS = [
-    "InterdimensionalCable",
     "NotTimAndEric",
     "DeepIntoYouTube",
     "youtubehaiku",
@@ -21,7 +20,7 @@ YOUTUBE_REGEX = re.compile(
 
 ARCTIC_URL = "https://arctic-shift.photon-reddit.com/api/posts/search"
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) InterdimensionalTV/1.0"
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) RetroSignalTV/1.0"
 }
 
 

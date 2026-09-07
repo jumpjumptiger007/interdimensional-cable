@@ -1,438 +1,86 @@
-// Interdimensional Cable
-// Keeps the original playback behavior, but adds UI state synchronization for the redesigned TV/remote.
+// Retro Signal TV: a small, static YouTube channel receiver.
+let videoList = ["dQw4w9WgXcQ", "L_LUpnjgPso", "9bZkp7q19f0", "w4m6N7Zk-yM", "fC7oUOUEEi4"];
+let player, currentChannelIndex = 0, isPowerOn = false, isMuted = false, isRandom = true;
+let apiReady = false, listReady = false, playerRequested = false, osdTimer, noiseInterval, audioCtx;
+const STORAGE_KEY = "retro-signal-tv-state-v1", MAX_CHANNEL_ATTEMPTS = 120;
+const invalidVideoIds = new Set(), blockedVideoIds = new Set(), favoriteVideoIds = new Set();
+const videoPlaybackTimes = {}, hasRandomSeeked = {};
+const canvas = document.getElementById("noiseCanvas"), ctx = canvas?.getContext("2d");
 
-// Default / fallback videos
-let videoList = [
-  "dQw4w9WgXcQ",
-  "L_LUpnjgPso",
-  "9bZkp7q19f0",
-  "w4m6N7Zk-yM",
-  "fC7oUOUEEi4"
-];
-
-let player = null;
-let currentChannelIndex = 0;
-let isPowerOn = false;
-let isMuted = false;
-let isRandom = true;
-let osdTimer = null;
-
-const videoPlaybackTimes = {};
-const hasRandomSeeked = {};
-
-let apiReady = false;
-let listReady = false;
-
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
+function readStoredState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (!saved || typeof saved !== "object") return;
+    isMuted = Boolean(saved.muted); isRandom = saved.random !== false;
+    if (Number.isFinite(saved.volume)) window.savedVolume = Math.max(0, Math.min(100, saved.volume));
+    if (typeof saved.channelId === "string") window.savedChannelId = saved.channelId;
+    if (Array.isArray(saved.blocked)) saved.blocked.forEach(id => typeof id === "string" && blockedVideoIds.add(id));
+    if (Array.isArray(saved.favorites)) saved.favorites.forEach(id => typeof id === "string" && favoriteVideoIds.add(id));
+    if (["dark", "warm", "basement", "blackout"].includes(saved.ambience)) setAmbience(saved.ambience, false);
+  } catch (_) { /* Invalid local state must not stop the receiver. */ }
 }
-
+function persistState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ muted: isMuted, random: isRandom, volume: player?.getVolume?.() ?? window.savedVolume ?? 70, channelId: videoList[currentChannelIndex], blocked: [...blockedVideoIds], favorites: [...favoriteVideoIds], ambience: document.body.dataset.ambience || "dark" })); } catch (_) {}
+}
+function shuffleArray(items) { for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; } return items; }
 async function loadVideoList() {
-  try {
-    const response = await fetch(`videos.json?t=${Date.now()}`);
-
-    if (!response.ok) {
-      throw new Error(`videos.json returned HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (Array.isArray(data) && data.length > 0) {
-      videoList = shuffleArray(data);
-      console.log(`Loaded ${videoList.length} interdimensional channels.`);
-    }
-  } catch (error) {
-    console.warn("Could not load videos.json. Using fallback channels.", error);
-    videoList = shuffleArray([...videoList]);
-  } finally {
-    listReady = true;
-    tryInitPlayer();
-  }
+  try { const response = await fetch(`videos.json?t=${Date.now()}`); if (!response.ok) throw new Error("Unable to load channel list"); const data = await response.json(); if (Array.isArray(data) && data.length) videoList = shuffleArray(data.filter(id => typeof id === "string")); }
+  catch (error) { console.warn("Using bundled fallback channels.", error); videoList = shuffleArray([...videoList]); }
+  finally { const remembered = videoList.indexOf(window.savedChannelId); currentChannelIndex = remembered >= 0 ? remembered : 0; listReady = true; tryInitPlayer(); }
 }
-
-loadVideoList();
-
-function showChannelOSD() {
-  const osd = document.getElementById("channelDisplay");
-  if (!osd || !isPowerOn) return;
-
-  const channelNum = String(currentChannelIndex + 1).padStart(2, "0");
-  osd.textContent = isRandom ? `CH ${channelNum} · RND` : `CH ${channelNum}`;
-  osd.classList.add("show");
-
-  clearTimeout(osdTimer);
-  osdTimer = setTimeout(() => {
-    osd.classList.remove("show");
-  }, 1900);
-}
-
-// --- Static noise audio ------------------------------------------------------
-
-let audioCtx = null;
-
-function playStaticSound(duration = 400) {
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-
-    if (audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
-
-    const bufferSize = Math.max(1, Math.floor(audioCtx.sampleRate * (duration / 1000)));
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output = buffer.getChannelData(0);
-
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = Math.random() * 2 - 1;
-    }
-
-    const whiteNoise = audioCtx.createBufferSource();
-    const gainNode = audioCtx.createGain();
-
-    whiteNoise.buffer = buffer;
-    gainNode.gain.setValueAtTime(0.105, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioCtx.currentTime + duration / 1000
-    );
-
-    whiteNoise.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    whiteNoise.start();
-  } catch (error) {
-    // Audio feedback is decorative; playback controls should still work if WebAudio is blocked.
-    console.debug("Static sound unavailable.", error);
-  }
-}
-
-// --- Static noise canvas -----------------------------------------------------
-
-const canvas = document.getElementById("noiseCanvas");
-const ctx = canvas ? canvas.getContext("2d") : null;
-let noiseInterval = null;
-
-function generateNoise() {
-  if (!canvas || !ctx) return;
-
-  const width = Math.max(1, Math.floor(canvas.clientWidth / 2));
-  const height = Math.max(1, Math.floor(canvas.clientHeight / 2));
-
-  if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
-  }
-
-  const imageData = ctx.createImageData(width, height);
-  const buffer32 = new Uint32Array(imageData.data.buffer);
-
-  for (let i = 0; i < buffer32.length; i++) {
-    const value = Math.floor(Math.random() * 255);
-    buffer32[i] =
-      (255 << 24) |
-      (value << 16) |
-      (value << 8) |
-      value;
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-}
-
-function startNoise() {
-  if (!canvas) return;
-
-  generateNoise();
-  canvas.classList.add("active");
-
-  if (!noiseInterval) {
-    noiseInterval = setInterval(generateNoise, 45);
-  }
-}
-
-function stopNoise() {
-  if (!canvas) return;
-
-  canvas.classList.remove("active");
-
-  if (noiseInterval) {
-    clearInterval(noiseInterval);
-    noiseInterval = null;
-  }
-}
-
-// --- YouTube ---------------------------------------------------------------
-
-function onYouTubeIframeAPIReady() {
-  apiReady = true;
-  tryInitPlayer();
-}
-
+function showChannelOSD(message) { const osd = document.getElementById("channelDisplay"); if (!osd || !isPowerOn) return; const number = String(currentChannelIndex + 1).padStart(2, "0"); osd.textContent = message || (isRandom ? `CH ${number} · RND` : `CH ${number}`); osd.classList.add("show"); clearTimeout(osdTimer); osdTimer = setTimeout(() => osd.classList.remove("show"), message ? 2600 : 1900); }
+function playClick(kind = "channel") { try { audioCtx ||= new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === "suspended") audioCtx.resume(); const oscillator = audioCtx.createOscillator(), gain = audioCtx.createGain(); oscillator.type = "square"; oscillator.frequency.value = kind === "power" ? 84 : 170; gain.gain.setValueAtTime(kind === "channel" ? .025 : .04, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + .045); oscillator.connect(gain).connect(audioCtx.destination); oscillator.start(); oscillator.stop(audioCtx.currentTime + .05); } catch (_) {} }
+function buzz() { try { navigator.vibrate?.(8); } catch (_) {} }
+function generateNoise() { if (!canvas || !ctx || !isPowerOn || document.hidden) return; const width = Math.max(1, Math.floor(canvas.clientWidth / 2)), height = Math.max(1, Math.floor(canvas.clientHeight / 2)); if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; } const image = ctx.createImageData(width, height), pixels = new Uint32Array(image.data.buffer); for (let i = 0; i < pixels.length; i++) { const n = Math.floor(Math.random() * 255); pixels[i] = (255 << 24) | (n << 16) | (n << 8) | n; } ctx.putImageData(image, 0, 0); }
+function startNoise() { if (!canvas) return; canvas.classList.add("active"); generateNoise(); if (!noiseInterval) noiseInterval = setInterval(generateNoise, 45); }
+function stopNoise() { canvas?.classList.remove("active"); if (noiseInterval) { clearInterval(noiseInterval); noiseInterval = null; } }
+function requestPlayer() { if (playerRequested) return; playerRequested = true; const script = document.createElement("script"); script.src = "https://www.youtube.com/iframe_api"; script.async = true; document.head.append(script); }
+function onYouTubeIframeAPIReady() { apiReady = true; tryInitPlayer(); }
 function tryInitPlayer() {
-  if (!apiReady || !listReady || player || !videoList.length) return;
-
-  player = new YT.Player("player", {
-    videoId: videoList[currentChannelIndex],
-    playerVars: {
-      autoplay: 0,
-      controls: 0,
-      disablekb: 1,
-      modestbranding: 1,
-      rel: 0,
-      playsinline: 1,
-      cc_load_policy: 0,
-      iv_load_policy: 3
-    },
-    events: {
-      onStateChange: onPlayerStateChange
-    }
-  });
+  if (!isPowerOn || !apiReady || !listReady || player || !videoList.length) return;
+  const index = findNextPlayableIndex(0, currentChannelIndex); if (index === null) return showNoSignal(); currentChannelIndex = index;
+  // Keep the supported native player presentation minimal; required YouTube UI remains available.
+  const playerVars = { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, cc_load_policy: 0 }; if (location.protocol.startsWith("http")) playerVars.origin = location.origin;
+  player = new YT.Player("player", { videoId: videoList[currentChannelIndex], playerVars, events: { onStateChange: onPlayerStateChange, onError: onPlayerError, onReady: onPlayerReady } });
 }
-
+function onPlayerReady() { if (!player) return; player.setVolume(window.savedVolume ?? 70); if (isMuted) player.mute(); player.playVideo(); }
 function onPlayerStateChange(event) {
-  const currentVideoId = videoList[currentChannelIndex];
-
-  if (
-    event.data === YT.PlayerState.PLAYING &&
-    isPowerOn &&
-    currentVideoId
-  ) {
-    if (
-      videoPlaybackTimes[currentVideoId] === undefined &&
-      !hasRandomSeeked[currentVideoId]
-    ) {
-      const tryRandomSeek = () => {
-        if (!player || !isPowerOn || currentVideoId !== videoList[currentChannelIndex]) {
-          return;
-        }
-
-        const duration = player.getDuration ? player.getDuration() : 0;
-
-        if (duration > 0) {
-          hasRandomSeeked[currentVideoId] = true;
-
-          if (isRandom && duration > 300) {
-            const maxStartTime = Math.max(0, duration - 60);
-            const randomStartTime = Math.floor(Math.random() * maxStartTime);
-
-            player.seekTo(randomStartTime, true);
-            videoPlaybackTimes[currentVideoId] = randomStartTime;
-          } else {
-            videoPlaybackTimes[currentVideoId] = 0;
-          }
-        } else {
-          setTimeout(tryRandomSeek, 120);
-        }
-      };
-
-      tryRandomSeek();
-    }
+  const id = videoList[currentChannelIndex];
+  if (event.data === YT.PlayerState.PLAYING && isPowerOn && id && videoPlaybackTimes[id] === undefined && !hasRandomSeeked[id]) {
+    const seek = () => { if (!player || !isPowerOn || id !== videoList[currentChannelIndex]) return; const duration = player.getDuration?.() || 0; if (!duration) return setTimeout(seek, 120); hasRandomSeeked[id] = true; if (isRandom && duration > 300) { const start = Math.floor(Math.random() * Math.max(0, duration - 60)); player.seekTo(start, true); videoPlaybackTimes[id] = start; } else videoPlaybackTimes[id] = 0; }; seek();
   }
-
-  if (event.data === YT.PlayerState.ENDED && isPowerOn && currentVideoId) {
-    delete videoPlaybackTimes[currentVideoId];
-    delete hasRandomSeeked[currentVideoId];
-    changeChannel(1);
-  }
+  if (event.data === YT.PlayerState.ENDED && isPowerOn && id) { delete videoPlaybackTimes[id]; delete hasRandomSeeked[id]; changeChannel(1); }
 }
-
-// --- Channel / power ---------------------------------------------------------
-
-function saveCurrentPlaybackPosition() {
-  if (
-    !player ||
-    !player.getCurrentTime ||
-    !player.getPlayerState ||
-    !videoList[currentChannelIndex]
-  ) {
-    return;
-  }
-
-  if (player.getPlayerState() !== -1) {
-    videoPlaybackTimes[videoList[currentChannelIndex]] =
-      player.getCurrentTime() || 0;
-  }
-}
-
-function changeChannel(direction) {
-  if (!isPowerOn || !videoList.length) return;
-
-  saveCurrentPlaybackPosition();
-  playStaticSound(430);
-  startNoise();
-
-  currentChannelIndex =
-    (currentChannelIndex + direction + videoList.length) % videoList.length;
-
-  showChannelOSD();
-
-  const nextVideoId = videoList[currentChannelIndex];
-  const savedTime = videoPlaybackTimes[nextVideoId];
-
-  setTimeout(() => {
-    if (player && player.loadVideoById) {
-      player.loadVideoById({
-        videoId: nextVideoId,
-        startSeconds: savedTime !== undefined ? Math.floor(savedTime) : 0
-      });
-    }
-
-    setTimeout(stopNoise, 145);
-  }, 320);
-}
-
-function syncPowerUI() {
-  const tvScreen = document.getElementById("tvScreen");
-  const tvSet = document.getElementById("tvSet");
-  const powerLed = document.getElementById("powerLed");
-  const btnPower = document.getElementById("btnPower");
-
-  tvScreen?.classList.toggle("powered-on", isPowerOn);
-  tvSet?.classList.toggle("powered-on", isPowerOn);
-  powerLed?.classList.toggle("on", isPowerOn);
-  btnPower?.classList.toggle("active", isPowerOn);
-  btnPower?.setAttribute("aria-pressed", String(isPowerOn));
-}
-
-function togglePower() {
-  isPowerOn = !isPowerOn;
-
-  if (isPowerOn) {
-    syncPowerUI();
-    playStaticSound(560);
-    startNoise();
-    showChannelOSD();
-
-    setTimeout(() => {
-      stopNoise();
-      if (player && player.playVideo) {
-        player.playVideo();
-      }
-    }, 470);
-  } else {
-    saveCurrentPlaybackPosition();
-    playStaticSound(280);
-    startNoise();
-
-    if (player && player.pauseVideo) {
-      player.pauseVideo();
-    }
-
-    setTimeout(() => {
-      stopNoise();
-      syncPowerUI();
-    }, 260);
-  }
-}
-
-// --- Remote UI ---------------------------------------------------------------
-
-function setPressedFeedback(button) {
-  if (!button) return;
-
-  button.classList.add("is-pressed");
-  setTimeout(() => button.classList.remove("is-pressed"), 105);
-}
-
-function syncMuteUI() {
-  const btnMute = document.getElementById("btnMute");
-  btnMute?.classList.toggle("active", isMuted);
-  btnMute?.setAttribute("aria-pressed", String(isMuted));
-}
-
-function syncRandomUI() {
-  const btnRandom = document.getElementById("btnRandom");
-  if (!btnRandom) return;
-
-  btnRandom.classList.toggle("active", isRandom);
-  btnRandom.setAttribute("aria-pressed", String(isRandom));
-  btnRandom.textContent = isRandom ? "RND" : "SEQ";
-}
-
-function changeVolume(delta) {
-  if (!player || !isPowerOn || !player.setVolume || !player.getVolume) return;
-
-  const nextVolume = Math.max(0, Math.min(100, player.getVolume() + delta));
-  player.setVolume(nextVolume);
-
-  if (nextVolume > 0 && isMuted && player.unMute) {
-    isMuted = false;
-    player.unMute();
-    syncMuteUI();
-  }
-}
-
+function onPlayerError() { const failed = videoList[currentChannelIndex]; if (!failed || !isPowerOn) return; invalidVideoIds.add(failed); startTransition("signal-lost"); showChannelOSD("SIGNAL LOST"); setTimeout(() => changeChannel(1, true), 180); }
+function isPlayable(id) { return id && !invalidVideoIds.has(id) && !blockedVideoIds.has(id); }
+function findNextPlayableIndex(direction, start = currentChannelIndex) { if (!videoList.length) return null; const step = direction === 0 ? 1 : Math.sign(direction), attempts = Math.min(videoList.length, MAX_CHANNEL_ATTEMPTS); for (let attempt = direction === 0 ? 0 : 1; attempt <= attempts; attempt++) { const index = (start + step * attempt + videoList.length) % videoList.length; if (isPlayable(videoList[index])) return index; } return null; }
+function saveCurrentPlaybackPosition() { const id = videoList[currentChannelIndex]; if (player?.getCurrentTime && player?.getPlayerState?.() !== -1 && id) videoPlaybackTimes[id] = player.getCurrentTime() || 0; }
+function startTransition(kind) { const screen = document.getElementById("tvScreen"); if (!screen) return; const variants = ["static", "sync-tear", "vertical-roll", "flash", "rgb-split", "black-snap"]; screen.dataset.transition = kind || variants[Math.floor(Math.random() * variants.length)]; screen.classList.add("transitioning"); startNoise(); }
+function endTransition() { const screen = document.getElementById("tvScreen"); screen?.classList.remove("transitioning"); if (screen) delete screen.dataset.transition; stopNoise(); }
+function changeChannel(direction, fromFailure = false) { if (!isPowerOn || !videoList.length) return; if (!fromFailure) saveCurrentPlaybackPosition(); const next = findNextPlayableIndex(direction); if (next === null) return showNoSignal(); currentChannelIndex = next; persistState(); playClick(); startTransition(); showChannelOSD(); syncFavoriteUI(); const id = videoList[currentChannelIndex], saved = videoPlaybackTimes[id]; setTimeout(() => { player?.loadVideoById?.({ videoId: id, startSeconds: saved === undefined ? 0 : Math.floor(saved) }); setTimeout(endTransition, 180); }, 210); }
+function showNoSignal() { endTransition(); startNoise(); showChannelOSD("NO SIGNAL"); document.getElementById("tvScreen")?.classList.add("no-signal"); player?.stopVideo?.(); }
+function syncPowerUI() { document.getElementById("tvScreen")?.classList.toggle("powered-on", isPowerOn); document.getElementById("tvSet")?.classList.toggle("powered-on", isPowerOn); document.getElementById("powerLed")?.classList.toggle("on", isPowerOn); document.getElementById("btnPower")?.classList.toggle("active", isPowerOn); document.getElementById("btnPower")?.setAttribute("aria-pressed", String(isPowerOn)); }
+function togglePower() { isPowerOn = !isPowerOn; playClick("power"); buzz(); syncPowerUI(); const screen = document.getElementById("tvScreen"); if (isPowerOn) { screen?.classList.remove("no-signal"); screen?.classList.add("powering-on"); requestPlayer(); startNoise(); showChannelOSD(); setTimeout(() => { screen?.classList.remove("powering-on"); tryInitPlayer(); player?.playVideo?.(); endTransition(); }, 520); } else { saveCurrentPlaybackPosition(); persistState(); screen?.classList.add("powering-off"); player?.pauseVideo?.(); setTimeout(() => { stopNoise(); screen?.classList.remove("powering-off"); syncPowerUI(); }, 380); } }
+function syncMuteUI() { const button = document.getElementById("btnMute"); button?.classList.toggle("active", isMuted); button?.setAttribute("aria-pressed", String(isMuted)); }
+function syncRandomUI() { const button = document.getElementById("btnRandom"); if (!button) return; button.classList.toggle("active", isRandom); button.setAttribute("aria-pressed", String(isRandom)); button.textContent = isRandom ? "RND" : "SEQ"; }
+function syncFavoriteUI() { const button = document.getElementById("btnFavorite"), active = favoriteVideoIds.has(videoList[currentChannelIndex]); button?.classList.toggle("active", active); button?.setAttribute("aria-pressed", String(active)); }
+function changeVolume(delta) { if (!player || !isPowerOn) return; player.setVolume(Math.max(0, Math.min(100, player.getVolume() + delta))); if (delta > 0 && isMuted) { isMuted = false; player.unMute?.(); syncMuteUI(); } persistState(); }
+function setPressedFeedback(button) { button?.classList.add("is-pressed"); setTimeout(() => button?.classList.remove("is-pressed"), 105); buzz(); }
+function toggleFavorite() { const id = videoList[currentChannelIndex]; if (!id) return; favoriteVideoIds.has(id) ? favoriteVideoIds.delete(id) : favoriteVideoIds.add(id); syncFavoriteUI(); persistState(); }
+function blockCurrentVideo() { const id = videoList[currentChannelIndex]; if (!id) return; blockedVideoIds.add(id); favoriteVideoIds.delete(id); persistState(); syncFavoriteUI(); changeChannel(1, true); }
+function toggleFullscreen() { const room = document.querySelector(".room"); if (!document.fullscreenEnabled || !room) return; document.fullscreenElement ? document.exitFullscreen() : room.requestFullscreen?.(); }
+function syncFullscreenControl() { const button = document.getElementById("btnFullscreen"); button?.toggleAttribute("disabled", !document.fullscreenEnabled); button?.setAttribute("aria-pressed", String(Boolean(document.fullscreenElement))); }
+function setAmbience(value, save = true) { document.body.dataset.ambience = value; const button = document.getElementById("btnRoom"); if (button) button.textContent = `ROOM: ${value.toUpperCase()}`; if (save) persistState(); }
+function cycleAmbience() { const modes = ["dark", "warm", "basement", "blackout"], current = document.body.dataset.ambience || "dark"; setAmbience(modes[(modes.indexOf(current) + 1) % modes.length]); }
+function openHelp() { const modal = document.getElementById("helpModal"); if (!modal) return; modal.hidden = false; document.getElementById("btnHelpClose")?.focus(); }
+function closeHelp() { document.getElementById("helpModal")?.setAttribute("hidden", ""); document.getElementById("btnHelp")?.focus(); }
+function isEditable(target) { return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable; }
 function initRemoteEvents() {
-  const btnPower = document.getElementById("btnPower");
-  const btnNext = document.getElementById("btnChannelNext");
-  const btnPrev = document.getElementById("btnChannelPrev");
-  const btnVolUp = document.getElementById("btnVolUp");
-  const btnVolDown = document.getElementById("btnVolDown");
-  const btnMute = document.getElementById("btnMute");
-  const btnRandom = document.getElementById("btnRandom");
-
-  syncPowerUI();
-  syncMuteUI();
-  syncRandomUI();
-
-  btnPower?.addEventListener("click", () => {
-    setPressedFeedback(btnPower);
-    togglePower();
-  });
-
-  btnNext?.addEventListener("click", () => {
-    setPressedFeedback(btnNext);
-    changeChannel(1);
-  });
-
-  btnPrev?.addEventListener("click", () => {
-    setPressedFeedback(btnPrev);
-    changeChannel(-1);
-  });
-
-  btnVolUp?.addEventListener("click", () => {
-    setPressedFeedback(btnVolUp);
-    changeVolume(10);
-  });
-
-  btnVolDown?.addEventListener("click", () => {
-    setPressedFeedback(btnVolDown);
-    changeVolume(-10);
-  });
-
-  btnMute?.addEventListener("click", () => {
-    setPressedFeedback(btnMute);
-
-    if (!player || !isPowerOn || !player.mute || !player.unMute) return;
-
-    isMuted = !isMuted;
-
-    if (isMuted) {
-      player.mute();
-    } else {
-      player.unMute();
-    }
-
-    syncMuteUI();
-  });
-
-  btnRandom?.addEventListener("click", () => {
-    setPressedFeedback(btnRandom);
-    isRandom = !isRandom;
-    syncRandomUI();
-
-    if (isPowerOn) {
-      showChannelOSD();
-    }
-  });
+  readStoredState(); syncPowerUI(); syncMuteUI(); syncRandomUI(); syncFavoriteUI(); syncFullscreenControl();
+  const bind = (id, handler) => document.getElementById(id)?.addEventListener("click", event => { setPressedFeedback(event.currentTarget); handler(); });
+  bind("btnPower", togglePower); bind("btnChannelNext", () => changeChannel(1)); bind("btnChannelPrev", () => changeChannel(-1)); bind("btnVolUp", () => changeVolume(10)); bind("btnVolDown", () => changeVolume(-10));
+  bind("btnMute", () => { if (!player || !isPowerOn) return; isMuted = !isMuted; isMuted ? player.mute?.() : player.unMute?.(); syncMuteUI(); persistState(); }); bind("btnRandom", () => { isRandom = !isRandom; syncRandomUI(); persistState(); if (isPowerOn) showChannelOSD(); }); bind("btnFullscreen", toggleFullscreen); bind("btnFavorite", toggleFavorite); bind("btnSkip", blockCurrentVideo); bind("btnRoom", cycleAmbience); bind("btnHelp", openHelp); document.getElementById("btnHelpClose")?.addEventListener("click", closeHelp);
+  document.getElementById("helpModal")?.addEventListener("click", event => { if (event.target.id === "helpModal") closeHelp(); }); document.addEventListener("fullscreenchange", syncFullscreenControl); document.addEventListener("visibilitychange", () => { if (document.hidden) stopNoise(); });
+  document.addEventListener("keydown", event => { if (isEditable(event.target) || event.metaKey || event.ctrlKey || event.altKey) return; if (event.key === "Escape") return closeHelp(); const controls = { ArrowUp: ["btnChannelNext", () => changeChannel(1)], ArrowDown: ["btnChannelPrev", () => changeChannel(-1)], ArrowLeft: ["btnVolDown", () => changeVolume(-10)], ArrowRight: ["btnVolUp", () => changeVolume(10)], " ": ["btnPower", togglePower], m: ["btnMute", () => document.getElementById("btnMute")?.click()], f: ["btnFullscreen", toggleFullscreen], "?": ["btnHelp", openHelp] }; const entry = controls[event.key.toLowerCase()] || controls[event.key]; if (!entry) return; event.preventDefault(); setPressedFeedback(document.getElementById(entry[0])); entry[1](); });
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=4").catch(() => {}); loadVideoList();
 }
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initRemoteEvents);
-} else {
-  initRemoteEvents();
-}
+document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initRemoteEvents) : initRemoteEvents();

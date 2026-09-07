@@ -4,15 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b0908">
-  <title>Interdimensional Cable</title>
+  <title>InterDemTV by Adrian</title>
   <link rel="icon" href="favicon.png" type="image/png">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <main class="room">
     <div class="room-glow" aria-hidden="true"></div>
+    <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">?</button>
 
-    <section class="console" aria-label="Interdimensional Cable television">
+    <section class="console" aria-label="Retro Signal television">
       <div class="tv-set" id="tvSet">
         <div class="tv-shell">
           <div class="tv-top-vents" aria-hidden="true"></div>
@@ -59,14 +61,14 @@
             <div class="speaker-grille speaker-grille--wide" aria-hidden="true"></div>
 
             <div class="brand-plate">
-              <span class="brand-name">INTERDIMENSIONAL</span>
-              <span class="brand-sub">CABLE</span>
+              <span class="brand-name">INTERDEMTV</span>
+              <span class="brand-sub">BY ADRIAN</span>
               <span class="brand-mark" aria-hidden="true">
                 <i></i><i></i><i></i>
               </span>
             </div>
 
-            <div class="model-label">MODEL IC-137 · MULTIVERSE RECEIVER</div>
+            <div class="model-label">SIGNAL RECEIVER · SR-84</div>
           </div>
         </div>
 
@@ -80,8 +82,8 @@
         <div class="remote-control" id="remoteControl" aria-label="Remote control">
           <div class="remote-sensor" aria-hidden="true"></div>
           <div class="remote-header">
-            <span class="remote-title">IC</span>
-            <span class="remote-model">R-137</span>
+            <span class="remote-title">SR</span>
+            <span class="remote-model">R-84</span>
           </div>
 
           <button class="remote-btn remote-btn--power" id="btnPower" type="button" aria-label="Power">
@@ -118,20 +120,38 @@
             <button class="remote-btn remote-btn--random active" id="btnRandom" type="button" aria-label="Random start">
               RND
             </button>
+
+            <button class="remote-btn remote-btn--utility" id="btnFullscreen" type="button" aria-label="Toggle fullscreen">FULL</button>
+            <button class="remote-btn remote-btn--utility" id="btnFavorite" type="button" aria-label="Favorite current channel" aria-pressed="false">FAV</button>
+            <button class="remote-btn remote-btn--utility remote-btn--skip" id="btnSkip" type="button" aria-label="Skip this channel forever">SKIP</button>
           </div>
 
+          <button class="remote-btn remote-btn--room" id="btnRoom" type="button" aria-label="Change room mode">ROOM: DARK</button>
+
           <div class="remote-footer">
-            <span>INTERDIMENSIONAL</span>
-            <strong>CABLE</strong>
+            <span>SIGNAL RECEIVER · SR-84</span>
+            <strong>INTERDEMTV</strong>
           </div>
         </div>
       </aside>
     </section>
 
     <p class="room-caption">RETRO TECH. INFINITE CHANNELS.</p>
+
+    <section class="help-modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+      <div class="help-modal__panel">
+        <button class="help-modal__close" id="btnHelpClose" type="button" aria-label="Close help">×</button>
+        <p class="help-modal__eyebrow">INTERDEMTV BY ADRIAN</p>
+        <h1 id="helpTitle">Receiver guide</h1>
+        <div class="help-modal__grid">
+          <section><h2>Remote</h2><p><b>POWER</b> start or stop playback.</p><p><b>CHANNEL</b> move through the shuffled channel list.</p><p><b>VOLUME / MUTE</b> adjust or silence audio.</p><p><b>RND / SEQ</b> preserve random-start or normal-start behavior.</p></section>
+          <section><h2>Utilities</h2><p><b>FULL</b> enter fullscreen.</p><p><b>FAV</b> save this channel locally.</p><p><b>SKIP</b> permanently hide this channel locally.</p><p><b>ROOM</b> cycle ambient room modes.</p></section>
+          <section><h2>Keyboard</h2><p><b>↑ / ↓</b> channel up / down</p><p><b>← / →</b> volume down / up</p><p><b>Space</b> power</p><p><b>M</b> mute · <b>F</b> fullscreen · <b>?</b> help</p></section>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
