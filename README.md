@@ -1,19 +1,28 @@
 # InterDemTV by Adrian
 
-A non-commercial personal experiment: a single-screen retro television and physical remote that tune through YouTube video IDs. Videos remain hosted by YouTube and belong to their respective owners.
+A retro web TV for surfing through strange corners of the internet, one channel at a time.
+
+InterDemTV recreates the feel of channel surfing with a retro television, remote control, and a continuously changing lineup of YouTube-hosted videos. It is a non-commercial personal project built for exploration and fun.
+
+## Features
+
+- Retro CRT-inspired TV and remote interface
+- Random and sequential channel surfing
+- Toggleable visual filters
+- Favorites and local channel skipping
+- Keyboard controls
+- Responsive desktop and mobile layout
 
 ## Run locally
 
-Serve this directory with any static web server, for example `python3 -m http.server`, then open the shown local URL. The YouTube player is requested only after the receiver is powered on.
+Serve the project with any static web server, for example:
 
-## Controls
+```bash
+python3 -m http.server
+```
 
-Use the remote for power, channel, volume, mute, RND/SEQ, fullscreen, favorites, and permanent local skip. Desktop keyboard controls are Arrow Up/Down for channels, Arrow Left/Right for volume, Space for power, M for mute, and F for fullscreen. Settings, favorites, skips, and the last usable channel are stored only in the browser's local storage.
+Then open the local URL shown in your terminal.
 
-`RND` preserves the original behavior: the channel list is shuffled on load, and unseen long videos can begin at one random position. `SEQ` starts unseen videos normally.
+## Note
 
-## Content refresh and validation
-
-The daily GitHub Actions workflow discovers candidate YouTube IDs, then runs `scripts/validate_videos.py`. Configure a repository secret named `YOUTUBE_API_KEY` to check public availability and embeddability in batches using the YouTube Data API. Without that secret, the workflow still runs and removes duplicates/invalid-shaped IDs; runtime recovery skips unavailable videos for the current session.
-
-This is a static GitHub Pages-compatible project with no accounts, tracking, or media rehosting.
+Videos remain hosted by YouTube and belong to their respective owners. InterDemTV does not rehost media.
