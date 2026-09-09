@@ -1169,3 +1169,487 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
     animation-iteration-count: 1 !important;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* UI redesign: warm late-night receiver room                                */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --room-black: #080605;
+  --room-brown: #1c0d08;
+  --shell-black: #100d0b;
+  --shell-mid: #2d2119;
+  --shell-edge: #070504;
+  --wood-dark: #29140a;
+  --wood-mid: #70401f;
+  --wood-light: #b76b32;
+  --metal: #a89273;
+  --cream: #ead8b8;
+  --amber: #ee8131;
+  --red: #ca3e27;
+  --green: #789b4d;
+  --phosphor: #d2ffbb;
+  --remote: #1d1713;
+  --remote-edge: #090605;
+}
+
+html,
+body {
+  background: #090503;
+}
+
+body {
+  position: relative;
+  min-height: 100dvh;
+  background:
+    radial-gradient(ellipse at 8% 38%, rgba(226, 99, 28, .16), transparent 18%),
+    radial-gradient(ellipse at 91% 30%, rgba(248, 153, 61, .16), transparent 15%),
+    radial-gradient(ellipse at 50% 40%, rgba(76, 63, 42, .16), transparent 43%),
+    linear-gradient(180deg, #1b0d09 0%, #0f0806 54%, #080504 100%);
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* A suggestion of window light and shelving behind the set. */
+body::before {
+  opacity: .95;
+  background:
+    radial-gradient(circle at 87% 21%, rgba(255, 200, 125, .95) 0 2px, transparent 3px),
+    radial-gradient(circle at 91% 29%, rgba(255, 155, 84, .7) 0 3px, transparent 4px),
+    radial-gradient(circle at 84% 31%, rgba(255, 209, 143, .72) 0 2px, transparent 3px),
+    radial-gradient(circle at 94% 38%, rgba(255, 174, 98, .8) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 90% 31%, rgba(236, 122, 52, .28), transparent 13%),
+    linear-gradient(90deg, rgba(5, 3, 2, .72) 0 5%, transparent 5.3% 86%, rgba(7, 3, 2, .7) 86.3% 100%),
+    linear-gradient(180deg, transparent 0 11%, rgba(37, 15, 8, .64) 11.2% 11.8%, transparent 12% 39%, rgba(20, 8, 5, .74) 39.3% 40%, transparent 40.2% 74%, rgba(24, 10, 5, .9) 74.2% 75.2%, transparent 75.4%);
+  filter: blur(.2px);
+}
+
+/* Soft pool of lamplight and the room's dark architectural edges. */
+body::after {
+  background:
+    radial-gradient(ellipse at 10% 54%, rgba(255, 152, 64, .24), transparent 13%),
+    radial-gradient(ellipse at 93% 61%, rgba(255, 105, 40, .12), transparent 14%),
+    linear-gradient(90deg, transparent 0 7%, rgba(0, 0, 0, .24) 7.2% 7.8%, transparent 8% 92%, rgba(0, 0, 0, .3) 92.2% 93%, transparent 93.2%),
+    linear-gradient(180deg, transparent 0 73%, rgba(0, 0, 0, .34) 73.2% 74%, transparent 74.2%);
+}
+
+.room {
+  z-index: 1;
+  min-height: 100dvh;
+  padding:
+    max(28px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right))
+    max(30px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
+}
+
+.room::before {
+  z-index: -5;
+  opacity: .55;
+  background:
+    linear-gradient(90deg, transparent 0 11%, rgba(208, 118, 49, .06) 11.2% 11.7%, transparent 12% 77%, rgba(220, 147, 78, .07) 77.2% 77.8%, transparent 78%),
+    repeating-linear-gradient(90deg, transparent 0 118px, rgba(255, 191, 112, .032) 119px 121px, transparent 122px 236px),
+    repeating-linear-gradient(0deg, transparent 0 74px, rgba(255, 230, 180, .022) 75px 76px, transparent 77px 148px),
+    radial-gradient(ellipse at 88% 28%, rgba(248, 153, 72, .22), transparent 24%),
+    radial-gradient(ellipse at 12% 26%, rgba(255, 130, 46, .12), transparent 18%);
+}
+
+.room::after {
+  z-index: -4;
+  bottom: -19vh;
+  height: 46vh;
+  opacity: .98;
+  background:
+    linear-gradient(90deg, transparent 49.7%, rgba(255, 195, 121, .12) 49.9% 50.1%, transparent 50.3%),
+    repeating-linear-gradient(91deg, rgba(39, 18, 9, .72) 0 4px, rgba(83, 39, 17, .58) 5px 43px, rgba(28, 12, 7, .78) 44px 47px),
+    radial-gradient(ellipse at 50% 3%, rgba(244, 137, 53, .2), transparent 47%),
+    linear-gradient(180deg, #40200d 0%, #170a05 58%, #080403 100%);
+  box-shadow: inset 0 18px 35px rgba(0, 0, 0, .45);
+}
+
+.room-glow {
+  z-index: -3;
+  width: min(92vw, 1420px);
+  opacity: .85;
+  filter: blur(38px);
+  background: radial-gradient(ellipse, rgba(221, 112, 35, .22), rgba(25, 12, 6, 0) 68%);
+}
+
+.room:has(.tv-screen.powered-on) .room-glow {
+  opacity: 1;
+  filter: blur(30px);
+  background: radial-gradient(ellipse, rgba(216, 99, 37, .33), rgba(31, 17, 11, 0) 68%);
+}
+
+.console {
+  width: min(1450px, 96vw);
+  grid-template-columns: minmax(0, 1fr) clamp(172px, 14vw, 218px);
+  gap: clamp(24px, 3vw, 46px);
+  filter: drop-shadow(0 50px 48px rgba(0, 0, 0, .7));
+}
+
+.tv-set {
+  transform: perspective(1600px) rotateX(.45deg) rotateY(.45deg) translateY(-1%);
+}
+
+.tv-shell {
+  padding: clamp(18px, 2vw, 31px);
+  padding-bottom: clamp(21px, 2.2vw, 33px);
+  border: 1px solid rgba(243, 182, 116, .18);
+  border-radius: clamp(28px, 3vw, 45px) clamp(25px, 2.8vw, 39px) clamp(31px, 3.4vw, 49px) clamp(31px, 3.4vw, 49px);
+  background:
+    linear-gradient(105deg, rgba(141, 67, 26, .2), transparent 18% 70%, rgba(106, 49, 21, .22)),
+    repeating-linear-gradient(23deg, rgba(255, 210, 155, .022) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #3b2b21 0%, #211914 21%, #15100d 66%, #0d0907 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 239, 207, .15),
+    inset 3px 0 7px rgba(255, 196, 117, .05),
+    inset -10px -13px 18px rgba(0, 0, 0, .65),
+    0 2px 0 rgba(236, 156, 83, .14),
+    0 24px 22px rgba(0, 0, 0, .54),
+    0 68px 105px rgba(0, 0, 0, .62);
+}
+
+.tv-shell::before,
+.tv-shell::after {
+  top: 6%;
+  bottom: 8%;
+  width: clamp(10px, 1vw, 16px);
+  opacity: .88;
+  background:
+    linear-gradient(90deg, rgba(37, 13, 5, .98), rgba(178, 91, 37, .7) 46%, rgba(43, 14, 5, .98)),
+    repeating-linear-gradient(0deg, rgba(255, 223, 172, .08) 0 1px, transparent 1px 7px);
+  box-shadow: 0 0 11px rgba(160, 70, 23, .18);
+}
+
+.tv-shell::before { left: -7px; }
+.tv-shell::after { right: -7px; }
+
+.tv-top-vents {
+  top: 8px;
+  height: 8px;
+  opacity: .85;
+  background: repeating-linear-gradient(90deg, #0a0705 0 16px, rgba(200, 109, 48, .25) 16px 18px, transparent 18px 26px);
+  box-shadow: 0 -1px 0 rgba(255, 213, 157, .08);
+}
+
+.tv-face {
+  grid-template-columns: minmax(0, 1fr) clamp(102px, 11.4vw, 150px);
+  gap: clamp(15px, 2vw, 27px);
+}
+
+.crt-frame {
+  padding: clamp(11px, 1.25vw, 17px);
+  border-radius: clamp(25px, 2.8vw, 40px);
+  background:
+    linear-gradient(145deg, #060504 0%, #493429 16%, #17110e 54%, #020201 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 238, 213, .18),
+    inset 0 -5px 11px rgba(0, 0, 0, .94),
+    0 1px 0 rgba(226, 154, 86, .16),
+    0 5px 0 rgba(0, 0, 0, .55);
+}
+
+.crt-bezel {
+  padding: clamp(10px, 1.2vw, 16px);
+  border-radius: clamp(27px, 3vw, 43px);
+  background:
+    radial-gradient(ellipse at 50% 45%, #201b17 0%, #0d0c0b 63%, #040302 100%),
+    #060606;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 202, 148, .06),
+    inset 0 0 34px rgba(0, 0, 0, .95),
+    0 0 0 1px rgba(0, 0, 0, .65);
+}
+
+.tv-screen {
+  aspect-ratio: 16 / 10;
+  border-radius: 16% / 13%;
+  background:
+    radial-gradient(ellipse at 50% 44%, #182322 0%, #0b1414 45%, #030706 100%);
+  clip-path: inset(0 round 15% 15% 13% 13%);
+  box-shadow:
+    inset 0 0 45px 15px rgba(0, 0, 0, .95),
+    inset 0 0 10px 2px rgba(182, 226, 191, .15),
+    inset 0 0 0 2px rgba(239, 201, 148, .12),
+    0 0 16px rgba(0, 0, 0, .92),
+    0 0 32px rgba(118, 190, 152, .06);
+}
+
+.tv-screen::before {
+  box-shadow:
+    inset 16px 0 32px rgba(0, 0, 0, .55),
+    inset -16px 0 32px rgba(0, 0, 0, .55),
+    inset 0 14px 29px rgba(0, 0, 0, .42),
+    inset 0 -17px 33px rgba(0, 0, 0, .62);
+}
+
+.scanlines { opacity: .62; }
+.screen-glare {
+  opacity: .8;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, .035) 15%, transparent 31%),
+    radial-gradient(ellipse at 86% 94%, rgba(154, 209, 168, .13), transparent 29%),
+    radial-gradient(ellipse at 15% 15%, rgba(255, 198, 129, .07), transparent 19%);
+}
+
+.glass-reflection {
+  inset: 3% 7% 52% 7%;
+  background: linear-gradient(180deg, rgba(255, 249, 223, .1), rgba(255, 255, 255, .008) 55%, transparent 76%);
+}
+
+.tv-controls {
+  padding: clamp(4px, .6vw, 9px) 0;
+}
+
+.speaker-grille {
+  border: 1px solid rgba(244, 179, 103, .1);
+  background:
+    repeating-linear-gradient(90deg, #050403 0 3px, rgba(152, 75, 31, .28) 3px 4px, transparent 4px 8px),
+    linear-gradient(180deg, #1b120c, #080604);
+  box-shadow:
+    inset 0 0 9px rgba(0, 0, 0, .92),
+    inset 0 1px rgba(255, 214, 160, .05),
+    0 1px 0 rgba(255, 208, 145, .04);
+}
+
+.speaker-grille--tall { min-height: 120px; }
+
+.hardware-label { color: #d1b88f; text-shadow: 0 1px 2px #000; }
+
+.power-indicator {
+  background: #060403;
+  box-shadow: inset 0 1px 4px #000, 0 0 0 1px rgba(198, 96, 40, .12);
+}
+
+.dial {
+  width: clamp(42px, 4.4vw, 57px);
+  background:
+    radial-gradient(circle at 36% 31%, #625347 0 7%, transparent 8%),
+    radial-gradient(circle, #40362d 0 45%, #17110d 49% 67%, #040303 70%);
+  box-shadow:
+    inset 2px 2px 3px rgba(255, 228, 188, .14),
+    inset -3px -4px 5px rgba(0, 0, 0, .6),
+    0 5px 9px rgba(0, 0, 0, .78);
+}
+
+.tv-lower-panel {
+  min-height: clamp(54px, 6.5vw, 79px);
+  padding-top: clamp(13px, 1.5vw, 19px);
+}
+
+.brand-plate {
+  border-color: rgba(225, 166, 94, .32);
+  background: linear-gradient(180deg, #332217, #120b07);
+  box-shadow:
+    inset 0 1px rgba(255, 228, 187, .1),
+    0 1px 0 rgba(0, 0, 0, .9),
+    0 4px 9px rgba(0, 0, 0, .62);
+}
+
+.tv-feet span {
+  height: clamp(9px, 1.1vw, 14px);
+  background: linear-gradient(180deg, #1b100a, #030202);
+  box-shadow: 0 11px 13px rgba(0, 0, 0, .6), inset 0 1px rgba(192, 105, 48, .12);
+}
+
+/* Give the controller the same warm edge light as the receiver. */
+.remote-wrap {
+  padding-bottom: clamp(8px, 1.7vw, 19px);
+  transform: rotate(1.6deg) translateY(-1%);
+  filter: drop-shadow(0 19px 16px rgba(0, 0, 0, .42));
+}
+
+.remote-control {
+  min-height: clamp(400px, 49vw, 560px);
+  padding: clamp(18px, 1.9vw, 24px) clamp(14px, 1.5vw, 19px) clamp(42px, 3.1vw, 44px);
+  gap: clamp(13px, 1.35vw, 18px);
+  border: 1px solid rgba(239, 181, 113, .2);
+  border-radius: 31px 31px 25px 25px / 36px 36px 22px 22px;
+  background:
+    radial-gradient(circle at 26% 8%, rgba(255, 226, 179, .1), transparent 25%),
+    repeating-linear-gradient(35deg, rgba(255, 245, 224, .009) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, #3a2a20 0%, #201712 44%, #120d0a 100%);
+  box-shadow:
+    inset 1px 0 rgba(255, 235, 207, .1),
+    inset -3px -4px 9px rgba(0, 0, 0, .7),
+    0 1px 0 rgba(244, 185, 115, .16),
+    0 25px 34px rgba(0, 0, 0, .66),
+    0 4px 10px rgba(0, 0, 0, .7);
+}
+
+.remote-control::after {
+  inset: 8px;
+  border-color: rgba(249, 202, 145, .04);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, .18);
+}
+
+.remote-sensor {
+  background: linear-gradient(180deg, #21100a, #040201);
+  box-shadow: inset 0 1px 2px rgba(206, 75, 35, .4), 0 0 10px rgba(214, 67, 28, .08);
+}
+
+.remote-header { color: #d7c1a0; }
+.remote-title { color: #f0ddbb; }
+.remote-label { color: #ddc7a8; text-shadow: 0 1px 2px #000; }
+
+.remote-btn {
+  border-color: rgba(255, 226, 186, .12);
+  background: linear-gradient(180deg, #49392e 0%, #28201b 100%);
+  box-shadow:
+    inset 0 1px rgba(255, 240, 218, .1),
+    0 4px 0 #0c0806,
+    0 7px 10px rgba(0, 0, 0, .48);
+}
+
+.remote-btn:hover { filter: brightness(1.16); }
+.remote-btn:focus-visible { outline-color: rgba(247, 190, 112, .9); }
+
+.remote-btn--power {
+  top: 49px;
+  right: 19px;
+  background:
+    radial-gradient(circle at 40% 32%, #ff9572 0 8%, transparent 9%),
+    linear-gradient(180deg, #e45135, #8f241b);
+  box-shadow:
+    inset 0 1px rgba(255, 244, 229, .26),
+    0 4px 0 #4e1712,
+    0 6px 12px rgba(0, 0, 0, .48),
+    0 0 15px rgba(239, 77, 40, .12);
+}
+
+.remote-btn--utility.active {
+  color: #ffe2a2;
+  background: linear-gradient(180deg, #77582f, #3f2d18);
+  box-shadow: inset 0 1px rgba(255, 238, 195, .13), 0 4px 0 #1b1209, 0 0 12px rgba(226, 142, 56, .13);
+}
+
+.remote-btn--random {
+  background: linear-gradient(180deg, #4e693d, #26371f);
+  box-shadow: inset 0 1px rgba(255, 255, 219, .1), 0 4px 0 #15200f, 0 6px 9px rgba(0, 0, 0, .4);
+}
+
+.remote-btn--random.active {
+  background: linear-gradient(180deg, #83a754, #455f31);
+  box-shadow: inset 0 1px rgba(255, 255, 231, .15), 0 0 12px rgba(138, 183, 81, .22), 0 4px 0 #1d2b15;
+}
+
+.remote-btn--room {
+  color: #e0c9a0;
+  background: linear-gradient(180deg, #443328, #211712);
+}
+
+.page-help {
+  top: max(22px, env(safe-area-inset-top));
+  right: max(22px, env(safe-area-inset-right));
+  border-color: rgba(231, 185, 116, .42);
+  color: #f1d39f;
+  background: linear-gradient(145deg, rgba(76, 51, 30, .96), rgba(25, 15, 10, .98));
+  box-shadow: inset 0 1px rgba(255, 235, 206, .14), 0 7px 18px rgba(0, 0, 0, .52), 0 0 15px rgba(230, 128, 43, .08);
+}
+
+.help-modal { background: rgba(12, 5, 2, .8); }
+.help-modal__panel {
+  border-color: rgba(231, 170, 98, .4);
+  background: linear-gradient(145deg, #3d2b1e, #130b07);
+  box-shadow: inset 0 1px rgba(255, 225, 180, .12), 0 30px 90px rgba(0, 0, 0, .76), 0 0 45px rgba(214, 102, 35, .1);
+}
+
+@media (max-width: 900px) {
+  .console {
+    width: min(95vw, 860px);
+    grid-template-columns: minmax(0, 1fr) 124px;
+    gap: 20px;
+  }
+
+  .remote-control { min-height: 410px; }
+}
+
+@media (max-width: 680px) {
+  .room {
+    min-height: 100svh;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(26px, env(safe-area-inset-bottom));
+  }
+
+  .console {
+    width: min(96vw, 600px);
+    gap: 19px;
+  }
+
+  .tv-set { transform: none; }
+  .tv-shell {
+    padding: 11px;
+    padding-bottom: 14px;
+    border-radius: 24px 21px 28px 28px;
+  }
+
+  .tv-face { grid-template-columns: minmax(0, 1fr) 62px; gap: 9px; }
+  .crt-frame,
+  .crt-bezel { padding: 7px; }
+  .tv-screen { aspect-ratio: 4 / 3; }
+  .speaker-grille--tall { min-height: 74px; }
+  .tv-lower-panel { min-height: 46px; padding-top: 8px; }
+
+  .remote-wrap {
+    padding-bottom: 42px;
+    transform: none;
+    filter: drop-shadow(0 16px 15px rgba(0, 0, 0, .45));
+  }
+
+  .remote-control {
+    width: min(100%, 430px);
+    min-height: 0;
+    padding: 14px 15px 13px;
+    border-radius: 21px;
+    background:
+      radial-gradient(circle at 26% 8%, rgba(255, 226, 179, .1), transparent 25%),
+      linear-gradient(180deg, #39291f, #17100c);
+  }
+
+  .remote-control::after { border-radius: 16px; }
+  .remote-btn { box-shadow: inset 0 1px rgba(255, 240, 218, .1), 0 3px 0 #0c0806, 0 6px 9px rgba(0, 0, 0, .44); }
+  .page-help { top: max(11px, env(safe-area-inset-top)); right: max(11px, env(safe-area-inset-right)); }
+}
+
+@media (max-width: 410px) {
+  .room { padding-left: 10px; padding-right: 10px; }
+  .tv-face { grid-template-columns: minmax(0, 1fr) 53px; }
+  .remote-control { padding-left: 11px; padding-right: 11px; }
+}
+
+/* Center the remote's power switch after removing the corner model marks. */
+.remote-header {
+  display: none !important;
+}
+
+.remote-btn--power {
+  left: calc(50% - clamp(4px, .4vw, 7px));
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.remote-btn--power:active,
+.remote-btn--power.is-pressed {
+  transform: translateX(-50%) translateY(3px);
+}
+
+@media (max-width: 680px) {
+  .remote-btn--power {
+    left: auto;
+    right: auto;
+    transform: none;
+  }
+
+  .remote-btn--power:active,
+  .remote-btn--power.is-pressed {
+    transform: translateY(3px);
+  }
+}
