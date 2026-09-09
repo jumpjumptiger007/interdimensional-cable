@@ -7,9 +7,9 @@
   <title>InterDemTV by Adrian</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=15">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
-<body>
+<body data-ambience="signal-room">
   <main class="room">
     <div class="room-glow" aria-hidden="true"></div>
     <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">?</button>
@@ -121,7 +121,7 @@
             <button class="remote-btn remote-btn--utility active" id="btnFilter" type="button" aria-label="Toggle screen filters" aria-pressed="true">FILTER</button>
           </div>
 
-          <button class="remote-btn remote-btn--room" id="btnRoom" type="button" aria-label="Change room mode">ROOM: DARK</button>
+          <button class="remote-btn remote-btn--room" id="btnRoom" type="button" aria-label="Toggle between black and signal room">ROOM: SIGNAL ROOM</button>
         </div>
       </aside>
     </section>
@@ -133,13 +133,13 @@
         <h1 id="helpTitle">Receiver guide</h1>
         <div class="help-modal__grid">
           <section><h2>Remote</h2><p><b>POWER</b> start or stop playback.</p><p><b>CHANNEL</b> move through the shuffled channel list.</p><p><b>VOLUME / MUTE</b> adjust or silence audio.</p><p><b>RND / SEQ</b> preserve random-start or normal-start behavior.</p></section>
-          <section><h2>Utilities</h2><p><b>FULL</b> enter fullscreen.</p><p><b>FAV</b> save this channel locally.</p><p><b>SKIP</b> permanently hide this channel locally.</p><p><b>FILTER</b> turn CRT screen effects on or off for a clearer picture.</p><p><b>ROOM</b> cycle ambient room modes.</p></section>
+          <section><h2>Utilities</h2><p><b>FULL</b> enter fullscreen.</p><p><b>FAV</b> save this channel locally.</p><p><b>SKIP</b> permanently hide this channel locally.</p><p><b>FILTER</b> turn CRT screen effects on or off for a clearer picture.</p><p><b>ROOM</b> toggle BLACK / SIGNAL ROOM.</p></section>
           <section><h2>Keyboard</h2><p><b>↑ / ↓</b> channel up / down</p><p><b>← / →</b> volume down / up</p><p><b>Space</b> power</p><p><b>M</b> mute · <b>F</b> fullscreen · <b>T</b> FILTER · <b>?</b> help</p></section>
         </div>
       </div>
     </section>
   </main>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

@@ -29,23 +29,13 @@ body {
   min-height: 100%;
 }
 
-html { background: #050505; }
-html:has(body[data-ambience="warm"]) { background: #160a04; }
-html:has(body[data-ambience="basement"]) { background: #050908; }
-html:has(body[data-ambience="blackout"]) { background: #000; }
-
-body[data-ambience="dark"] { --room-black: #050505; background: linear-gradient(180deg, #151515 0 62%, #050505 63% 100%); }
-body[data-ambience="warm"] { --room-black: #160a04; background: linear-gradient(90deg, #29140a, #4a2613 72%, #1b0b05); }
-body[data-ambience="basement"] { --room-black: #050908; background: linear-gradient(180deg, #303936 0 61%, #101715 62% 100%); }
-body[data-ambience="blackout"] { --room-black: #000; background: #000; }
+html { background: #000; }
 
 body {
   min-height: 100dvh;
   color: #f4eee5;
   font-family: "SF Pro Display", "Helvetica Neue", "Segoe UI", Arial, sans-serif;
-  background:
-    radial-gradient(circle at 49% 42%, rgba(120, 128, 124, .08), transparent 34%),
-    linear-gradient(180deg, #151515 0 62%, var(--room-black) 63% 100%);
+  background: #000;
   overflow-x: hidden;
 }
 
@@ -72,10 +62,7 @@ button {
   position: absolute;
   z-index: -5;
   inset: 0;
-  opacity: .22;
-  background:
-    linear-gradient(90deg, transparent 49.8%, rgba(255,255,255,.03) 50%, transparent 50.2%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 5px);
+  display: none;
   pointer-events: none;
 }
 
@@ -83,67 +70,20 @@ button {
   content: "";
   position: absolute;
   z-index: -4;
-  left: -10%;
-  right: -10%;
-  bottom: -18vh;
-  height: 42vh;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(160, 170, 165, .09), transparent 58%),
-    linear-gradient(180deg, #111, #030303);
-  transform: perspective(700px) rotateX(64deg);
-  transform-origin: top;
+  inset: 0;
+  display: none;
   pointer-events: none;
 }
 
 .room-glow {
   position: absolute;
   z-index: -3;
-  width: min(80vw, 1180px);
+  width: min(92vw, 1420px);
   aspect-ratio: 1.6;
   border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(126, 157, 146, .14), rgba(15, 18, 17, 0) 68%);
-  filter: blur(32px);
+  display: none;
   transition: opacity .35s ease, filter .35s ease;
-  opacity: .55;
   pointer-events: none;
-}
-
-body[data-ambience="warm"] .room::before {
-  opacity: .62;
-  background:
-    radial-gradient(circle at 88% 27%, rgba(255, 177, 82, .42), transparent 18%),
-    repeating-linear-gradient(90deg, rgba(255, 220, 164, .025) 0 2px, transparent 2px 76px),
-    linear-gradient(90deg, transparent 0 64%, rgba(255, 157, 58, .14) 100%);
-}
-body[data-ambience="warm"] .room::after {
-  background:
-    repeating-linear-gradient(93deg, transparent 0 48px, rgba(255, 184, 105, .055) 49px 51px),
-    radial-gradient(ellipse at 76% 0%, rgba(255, 152, 60, .4), transparent 38%),
-    linear-gradient(180deg, #512711, #170904);
-}
-body[data-ambience="warm"] .room-glow { left: 22%; opacity: .95; background: radial-gradient(ellipse, rgba(255, 135, 46, .38), transparent 66%); }
-body[data-ambience="basement"] .room::before {
-  opacity: .68;
-  background:
-    radial-gradient(circle at 50% -4%, rgba(191, 218, 205, .22), transparent 28%),
-    repeating-radial-gradient(circle at 18% 26%, rgba(255,255,255,.025) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(87deg, transparent 0 109px, rgba(8, 16, 14, .12) 110px 111px);
-}
-body[data-ambience="basement"] .room::after {
-  background:
-    linear-gradient(90deg, transparent 49.7%, rgba(131, 153, 145, .06) 50%, transparent 50.3%),
-    repeating-linear-gradient(96deg, transparent 0 86px, rgba(0,0,0,.13) 87px 89px),
-    linear-gradient(180deg, #202c29, #070b0a 78%);
-}
-body[data-ambience="basement"] .room-glow { top: 7%; opacity: .58; background: radial-gradient(ellipse, rgba(133, 183, 166, .24), transparent 62%); }
-body[data-ambience="blackout"] .room::before,
-body[data-ambience="blackout"] .room::after { opacity: 0; }
-body[data-ambience="blackout"] .room-glow { opacity: .03; background: radial-gradient(ellipse, rgba(131, 180, 163, .2), transparent 58%); }
-body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opacity: .55; }
-
-.room:has(.tv-screen.powered-on) .room-glow {
-  opacity: 1;
-  filter: blur(25px);
 }
 
 .console {
@@ -1195,17 +1135,12 @@ body[data-ambience="blackout"] .room:has(.tv-screen.powered-on) .room-glow { opa
 
 html,
 body {
-  background: #090503;
+  background: #000;
 }
 
 body {
   position: relative;
   min-height: 100dvh;
-  background:
-    radial-gradient(ellipse at 8% 38%, rgba(226, 99, 28, .16), transparent 18%),
-    radial-gradient(ellipse at 91% 30%, rgba(248, 153, 61, .16), transparent 15%),
-    radial-gradient(ellipse at 50% 40%, rgba(76, 63, 42, .16), transparent 43%),
-    linear-gradient(180deg, #1b0d09 0%, #0f0806 54%, #080504 100%);
 }
 
 body::before,
@@ -1217,29 +1152,6 @@ body::after {
   pointer-events: none;
 }
 
-/* A suggestion of window light and shelving behind the set. */
-body::before {
-  opacity: .95;
-  background:
-    radial-gradient(circle at 87% 21%, rgba(255, 200, 125, .95) 0 2px, transparent 3px),
-    radial-gradient(circle at 91% 29%, rgba(255, 155, 84, .7) 0 3px, transparent 4px),
-    radial-gradient(circle at 84% 31%, rgba(255, 209, 143, .72) 0 2px, transparent 3px),
-    radial-gradient(circle at 94% 38%, rgba(255, 174, 98, .8) 0 2px, transparent 3px),
-    radial-gradient(ellipse at 90% 31%, rgba(236, 122, 52, .28), transparent 13%),
-    linear-gradient(90deg, rgba(5, 3, 2, .72) 0 5%, transparent 5.3% 86%, rgba(7, 3, 2, .7) 86.3% 100%),
-    linear-gradient(180deg, transparent 0 11%, rgba(37, 15, 8, .64) 11.2% 11.8%, transparent 12% 39%, rgba(20, 8, 5, .74) 39.3% 40%, transparent 40.2% 74%, rgba(24, 10, 5, .9) 74.2% 75.2%, transparent 75.4%);
-  filter: blur(.2px);
-}
-
-/* Soft pool of lamplight and the room's dark architectural edges. */
-body::after {
-  background:
-    radial-gradient(ellipse at 10% 54%, rgba(255, 152, 64, .24), transparent 13%),
-    radial-gradient(ellipse at 93% 61%, rgba(255, 105, 40, .12), transparent 14%),
-    linear-gradient(90deg, transparent 0 7%, rgba(0, 0, 0, .24) 7.2% 7.8%, transparent 8% 92%, rgba(0, 0, 0, .3) 92.2% 93%, transparent 93.2%),
-    linear-gradient(180deg, transparent 0 73%, rgba(0, 0, 0, .34) 73.2% 74%, transparent 74.2%);
-}
-
 .room {
   z-index: 1;
   min-height: 100dvh;
@@ -1248,44 +1160,6 @@ body::after {
     max(24px, env(safe-area-inset-right))
     max(30px, env(safe-area-inset-bottom))
     max(24px, env(safe-area-inset-left));
-}
-
-.room::before {
-  z-index: -5;
-  opacity: .55;
-  background:
-    linear-gradient(90deg, transparent 0 11%, rgba(208, 118, 49, .06) 11.2% 11.7%, transparent 12% 77%, rgba(220, 147, 78, .07) 77.2% 77.8%, transparent 78%),
-    repeating-linear-gradient(90deg, transparent 0 118px, rgba(255, 191, 112, .032) 119px 121px, transparent 122px 236px),
-    repeating-linear-gradient(0deg, transparent 0 74px, rgba(255, 230, 180, .022) 75px 76px, transparent 77px 148px),
-    radial-gradient(ellipse at 88% 28%, rgba(248, 153, 72, .22), transparent 24%),
-    radial-gradient(ellipse at 12% 26%, rgba(255, 130, 46, .12), transparent 18%);
-}
-
-.room::after {
-  z-index: -4;
-  bottom: -19vh;
-  height: 46vh;
-  opacity: .98;
-  background:
-    linear-gradient(90deg, transparent 49.7%, rgba(255, 195, 121, .12) 49.9% 50.1%, transparent 50.3%),
-    repeating-linear-gradient(91deg, rgba(39, 18, 9, .72) 0 4px, rgba(83, 39, 17, .58) 5px 43px, rgba(28, 12, 7, .78) 44px 47px),
-    radial-gradient(ellipse at 50% 3%, rgba(244, 137, 53, .2), transparent 47%),
-    linear-gradient(180deg, #40200d 0%, #170a05 58%, #080403 100%);
-  box-shadow: inset 0 18px 35px rgba(0, 0, 0, .45);
-}
-
-.room-glow {
-  z-index: -3;
-  width: min(92vw, 1420px);
-  opacity: .85;
-  filter: blur(38px);
-  background: radial-gradient(ellipse, rgba(221, 112, 35, .22), rgba(25, 12, 6, 0) 68%);
-}
-
-.room:has(.tv-screen.powered-on) .room-glow {
-  opacity: 1;
-  filter: blur(30px);
-  background: radial-gradient(ellipse, rgba(216, 99, 37, .33), rgba(31, 17, 11, 0) 68%);
 }
 
 .console {
@@ -1651,5 +1525,973 @@ body::after {
   .remote-btn--power:active,
   .remote-btn--power.is-pressed {
     transform: translateY(3px);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* TV body pass: retro-futurist broadcast terminal                            */
+/* -------------------------------------------------------------------------- */
+
+.tv-set {
+  position: relative;
+  isolation: isolate;
+  filter: drop-shadow(0 36px 26px rgba(0, 0, 0, .58)) drop-shadow(0 0 22px rgba(98, 178, 191, .06));
+}
+
+.tv-shell {
+  padding: clamp(22px, 2.25vw, 34px);
+  padding-bottom: clamp(25px, 2.45vw, 37px);
+  border: 1px solid rgba(220, 179, 128, .27);
+  border-right-color: rgba(121, 188, 197, .2);
+  border-radius: clamp(31px, 3.2vw, 48px) clamp(24px, 2.8vw, 42px) clamp(35px, 3.6vw, 54px) clamp(29px, 3vw, 45px);
+  background:
+    radial-gradient(circle at 4% 12%, rgba(255, 192, 116, .11), transparent 19%),
+    radial-gradient(circle at 96% 71%, rgba(93, 169, 181, .1), transparent 21%),
+    linear-gradient(104deg, rgba(226, 139, 64, .14), transparent 21% 74%, rgba(84, 176, 188, .12)),
+    repeating-linear-gradient(117deg, rgba(255, 235, 204, .022) 0 1px, transparent 1px 6px),
+    linear-gradient(180deg, #403229 0%, #241c18 24%, #151311 67%, #0c0c0d 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 239, 210, .17),
+    inset 5px 0 10px rgba(255, 178, 89, .07),
+    inset -10px -16px 22px rgba(0, 0, 0, .72),
+    inset 0 -1px rgba(91, 181, 193, .17),
+    0 3px 0 rgba(12, 8, 6, .95),
+    0 25px 24px rgba(0, 0, 0, .58),
+    0 70px 105px rgba(0, 0, 0, .64);
+}
+
+/* Offset edge armor makes the shell read as a machined enclosure, not a box. */
+.tv-shell::before,
+.tv-shell::after {
+  top: 5%;
+  bottom: 7%;
+  width: clamp(12px, 1.15vw, 18px);
+  border: 1px solid rgba(241, 174, 99, .2);
+  border-radius: 7px;
+  opacity: .96;
+  background:
+    linear-gradient(90deg, #140a06 0%, #704126 33%, #bd7540 47%, #1b0c06 57%, #050404 100%),
+    repeating-linear-gradient(0deg, rgba(255, 228, 183, .11) 0 1px, transparent 1px 8px);
+  box-shadow:
+    inset 2px 0 3px rgba(255, 205, 145, .18),
+    inset -3px 0 4px rgba(0, 0, 0, .76),
+    0 0 14px rgba(231, 107, 42, .12);
+  pointer-events: none;
+}
+
+.tv-shell::before {
+  left: -8px;
+  clip-path: polygon(0 0, 100% 3%, 100% 96%, 0 100%);
+}
+
+.tv-shell::after {
+  right: -8px;
+  border-color: rgba(115, 198, 205, .25);
+  background:
+    linear-gradient(90deg, #050607 0%, #18373b 43%, #78aeb1 51%, #0d1719 60%, #020303 100%),
+    repeating-linear-gradient(0deg, rgba(203, 252, 248, .1) 0 1px, transparent 1px 8px);
+  box-shadow:
+    inset 2px 0 3px rgba(174, 244, 237, .14),
+    inset -3px 0 4px rgba(0, 0, 0, .82),
+    0 0 16px rgba(61, 177, 190, .14);
+  clip-path: polygon(0 3%, 100% 0, 100% 100%, 0 96%);
+}
+
+.tv-top-vents {
+  top: 9px;
+  left: 24%;
+  right: 25%;
+  height: 10px;
+  border: 1px solid rgba(224, 163, 101, .18);
+  border-radius: 3px 8px 3px 8px;
+  opacity: .92;
+  background:
+    repeating-linear-gradient(90deg, #050506 0 7px, #83502d 7px 9px, #0a0807 9px 17px),
+    linear-gradient(180deg, #271b15, #050505);
+  box-shadow:
+    inset 0 1px rgba(255, 232, 190, .14),
+    0 2px 0 rgba(0, 0, 0, .64),
+    0 0 10px rgba(227, 120, 43, .08);
+}
+
+.tv-face {
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) clamp(108px, 11.8vw, 158px);
+  gap: clamp(17px, 2.1vw, 30px);
+}
+
+.tv-face::before,
+.tv-face::after {
+  content: "";
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* A cool service strip breaks the warm shell at the control-side shoulder. */
+.tv-face::before {
+  top: 7%;
+  right: clamp(7px, .8vw, 12px);
+  width: clamp(4px, .42vw, 7px);
+  height: 31%;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #72d2d0, #1c555d 45%, #0a1518);
+  box-shadow:
+    0 0 7px rgba(105, 222, 215, .6),
+    0 0 18px rgba(56, 176, 190, .32);
+  opacity: .56;
+}
+
+.tv-face::after {
+  left: 5%;
+  bottom: -10px;
+  width: 32%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(214, 143, 74, .6) 14% 78%, transparent);
+  box-shadow: 0 0 8px rgba(223, 129, 54, .18);
+}
+
+.crt-frame {
+  padding: clamp(14px, 1.45vw, 21px);
+  border: 1px solid rgba(201, 161, 119, .23);
+  border-radius: clamp(29px, 3.2vw, 47px) clamp(25px, 2.8vw, 41px) clamp(34px, 3.8vw, 54px) clamp(31px, 3.3vw, 48px);
+  background:
+    linear-gradient(132deg, #060708 0%, #433229 13%, #17191a 35%, #0a0b0d 72%, #020304 100%);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 237, 211, .18),
+    inset 4px 0 8px rgba(231, 144, 73, .08),
+    inset -7px -8px 12px rgba(0, 0, 0, .94),
+    0 1px 0 rgba(123, 209, 215, .15),
+    0 6px 0 rgba(0, 0, 0, .56);
+}
+
+.crt-bezel {
+  padding: clamp(12px, 1.35vw, 18px);
+  border: 1px solid rgba(146, 198, 202, .16);
+  border-radius: clamp(31px, 3.45vw, 51px) clamp(28px, 3vw, 45px) clamp(36px, 4vw, 58px) clamp(33px, 3.5vw, 52px);
+  background:
+    linear-gradient(145deg, rgba(111, 121, 119, .13), transparent 26% 72%, rgba(0, 0, 0, .3)),
+    radial-gradient(ellipse at 47% 46%, #24292a 0%, #111516 56%, #050708 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, .8),
+    inset 0 0 0 4px rgba(255, 224, 186, .045),
+    inset 0 0 38px rgba(0, 0, 0, .98),
+    0 0 0 1px rgba(0, 0, 0, .78);
+}
+
+.tv-screen {
+  aspect-ratio: 16 / 10;
+  border: 1px solid rgba(157, 222, 222, .17);
+  border-radius: 19% / 16%;
+  background:
+    radial-gradient(ellipse at 48% 43%, #1c3030 0%, #0c191b 43%, #020606 100%);
+  clip-path: inset(0 round 18% 18% 16% 16%);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, .84),
+    inset 0 0 52px 18px rgba(0, 0, 0, .96),
+    inset 0 0 12px 2px rgba(184, 235, 220, .18),
+    0 0 0 3px rgba(10, 10, 10, .86),
+    0 0 19px rgba(75, 187, 188, .1);
+}
+
+.tv-screen::before {
+  inset: 0;
+  border: 1px solid rgba(221, 246, 224, .1);
+  box-shadow:
+    inset 22px 0 38px rgba(0, 0, 0, .62),
+    inset -22px 0 38px rgba(0, 0, 0, .62),
+    inset 0 17px 35px rgba(0, 0, 0, .46),
+    inset 0 -20px 40px rgba(0, 0, 0, .7),
+    inset 0 0 10px rgba(111, 197, 195, .12);
+}
+
+.screen-glare {
+  opacity: .88;
+  background:
+    linear-gradient(117deg, rgba(255, 255, 255, .16) 0%, rgba(255, 255, 255, .035) 13%, transparent 29%),
+    radial-gradient(ellipse at 85% 95%, rgba(101, 204, 185, .16), transparent 30%),
+    radial-gradient(ellipse at 11% 18%, rgba(246, 171, 91, .08), transparent 20%);
+}
+
+.glass-reflection {
+  inset: 3% 8% 53% 7%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 252, 229, .11), rgba(255, 255, 255, .012) 58%, transparent 78%);
+  filter: blur(2px);
+}
+
+.tv-screen.powered-on {
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, .84),
+    inset 0 0 52px 18px rgba(0, 0, 0, .92),
+    inset 0 0 12px 2px rgba(184, 235, 220, .2),
+    0 0 0 3px rgba(10, 10, 10, .86),
+    0 0 27px rgba(72, 197, 194, .2);
+}
+
+.tv-controls {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  padding: clamp(7px, .75vw, 11px) clamp(5px, .45vw, 8px);
+  border: 1px solid rgba(133, 197, 199, .16);
+  border-left-color: rgba(239, 171, 96, .27);
+  border-radius: 7px 18px 20px 8px;
+  background:
+    linear-gradient(90deg, rgba(231, 146, 68, .1), transparent 17% 76%, rgba(84, 185, 193, .1)),
+    linear-gradient(180deg, rgba(30, 34, 34, .92), rgba(8, 10, 11, .96));
+  box-shadow:
+    inset 1px 0 rgba(255, 195, 121, .1),
+    inset -6px 0 10px rgba(0, 0, 0, .5),
+    0 0 0 2px rgba(0, 0, 0, .42),
+    0 0 17px rgba(76, 175, 183, .08);
+}
+
+.tv-controls::before {
+  content: "SYS / RF-07";
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  right: 8px;
+  color: rgba(169, 213, 207, .5);
+  font: 700 clamp(6px, .45vw, 8px)/1 "Courier New", monospace;
+  letter-spacing: .13em;
+  text-shadow: 0 0 5px rgba(87, 192, 191, .3);
+  pointer-events: none;
+}
+
+.tv-controls::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 7px;
+  right: 7px;
+  bottom: 5px;
+  height: 3px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #b26d36, #3c7678 48%, transparent 85%);
+  box-shadow: 0 0 8px rgba(74, 168, 173, .2);
+  opacity: .72;
+}
+
+.speaker-grille {
+  border: 1px solid rgba(177, 219, 211, .12);
+  border-radius: 4px 9px 5px 7px;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, .92) 0 3px, rgba(116, 166, 161, .24) 3px 4px, transparent 4px 8px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, .36) 0 2px, transparent 2px 5px),
+    linear-gradient(180deg, #202527, #060809);
+  box-shadow:
+    inset 0 0 9px rgba(0, 0, 0, .96),
+    inset 0 1px rgba(236, 238, 214, .1),
+    0 1px 0 rgba(231, 164, 89, .08);
+}
+
+.speaker-grille--tall {
+  min-height: 132px;
+  background-size: auto, auto, 100% 100%;
+}
+
+.speaker-grille--wide {
+  width: min(36%, 270px);
+  height: clamp(30px, 3.5vw, 45px);
+}
+
+.hardware-cluster {
+  position: relative;
+  gap: 8px;
+  padding-top: clamp(20px, 2vw, 28px);
+}
+
+.hardware-cluster::before {
+  content: "TUNE / CAL";
+  position: absolute;
+  top: 5px;
+  left: 6px;
+  color: rgba(235, 190, 126, .58);
+  font: 700 clamp(6px, .48vw, 8px)/1 "Courier New", monospace;
+  letter-spacing: .14em;
+}
+
+.hardware-cluster::after {
+  content: "";
+  position: absolute;
+  top: 25px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border: 1px solid rgba(102, 208, 204, .55);
+  border-radius: 50%;
+  background: #123d3e;
+  box-shadow: 0 0 7px rgba(86, 224, 218, .35);
+}
+
+.hardware-label {
+  color: #d9c19a;
+  font-size: clamp(8px, .66vw, 10px);
+  letter-spacing: .22em;
+  text-shadow: 0 1px 2px #000, 0 0 5px rgba(218, 156, 83, .12);
+}
+
+.power-indicator {
+  width: 28px;
+  height: 12px;
+  border: 1px solid rgba(154, 210, 208, .14);
+  background: #050708;
+  box-shadow: inset 0 1px 4px #000, 0 0 0 1px rgba(209, 114, 55, .12);
+}
+
+.brand-light {
+  width: 6px;
+  height: 6px;
+  background: #3a1510;
+}
+
+.brand-light.on {
+  background: #fa5134;
+  box-shadow: 0 0 5px rgba(255, 86, 52, .98), 0 0 13px rgba(242, 75, 42, .7), 0 0 22px rgba(78, 189, 193, .18);
+}
+
+.dial {
+  width: clamp(46px, 4.7vw, 62px);
+  border: 1px solid rgba(211, 161, 96, .25);
+  background:
+    radial-gradient(circle at 34% 28%, rgba(239, 213, 174, .26) 0 5%, transparent 6%),
+    radial-gradient(circle at 50% 50%, #675747 0 17%, #302a26 18% 42%, #121416 44% 59%, #050607 61% 73%, #5c4b3b 74% 77%, #050506 79%);
+  box-shadow:
+    inset 2px 2px 3px rgba(255, 229, 190, .16),
+    inset -4px -5px 7px rgba(0, 0, 0, .75),
+    0 5px 10px rgba(0, 0, 0, .82),
+    0 0 12px rgba(82, 177, 182, .08);
+}
+
+.dial-notch {
+  height: 28%;
+  background: #dbc39a;
+  box-shadow: 0 0 4px rgba(242, 183, 101, .28);
+}
+
+.tv-lower-panel {
+  position: relative;
+  min-height: clamp(61px, 7vw, 86px);
+  border-top: 1px solid rgba(210, 152, 90, .16);
+  padding-top: clamp(15px, 1.7vw, 22px);
+}
+
+.tv-lower-panel::before {
+  content: "BROADCAST RECEIVER // CLASS IV";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: rgba(158, 196, 189, .42);
+  font: 700 clamp(6px, .46vw, 8px)/1 "Courier New", monospace;
+  letter-spacing: .13em;
+  pointer-events: none;
+}
+
+.brand-plate {
+  border-color: rgba(221, 167, 99, .38);
+  border-radius: 5px 2px 4px 2px;
+  background:
+    linear-gradient(90deg, rgba(95, 166, 168, .12), transparent 24% 72%, rgba(218, 132, 55, .14)),
+    linear-gradient(180deg, #30241c, #0a0c0d);
+  box-shadow:
+    inset 0 1px rgba(255, 235, 200, .12),
+    inset 0 0 0 1px rgba(94, 182, 186, .08),
+    0 1px 0 #000,
+    0 5px 10px rgba(0, 0, 0, .64);
+}
+
+.tv-feet span {
+  width: 17%;
+  height: clamp(10px, 1.2vw, 16px);
+  border: 1px solid rgba(171, 111, 57, .2);
+  background: linear-gradient(180deg, #24150d, #050607 62%, #000);
+  box-shadow: 0 12px 16px rgba(0, 0, 0, .66), inset 0 1px rgba(213, 144, 77, .15);
+}
+
+.tv-set.powered-on .tv-controls {
+  box-shadow:
+    inset 1px 0 rgba(255, 195, 121, .1),
+    inset -6px 0 10px rgba(0, 0, 0, .5),
+    0 0 0 2px rgba(0, 0, 0, .42),
+    0 0 20px rgba(73, 194, 195, .14),
+    0 0 9px rgba(223, 123, 49, .1);
+}
+
+@media (max-width: 680px) {
+  .tv-shell {
+    padding: 13px;
+    padding-bottom: 16px;
+    border-radius: 25px 21px 30px 28px;
+  }
+
+  .tv-face { grid-template-columns: minmax(0, 1fr) 62px; gap: 9px; }
+  .crt-frame,
+  .crt-bezel { padding: 8px; }
+  .tv-screen { border-radius: 17% / 14%; clip-path: inset(0 round 16% 16% 14% 14%); }
+  .tv-controls { padding: 4px 3px; border-radius: 5px 11px 13px 6px; }
+  .speaker-grille--tall { min-height: 80px; }
+  .hardware-cluster { gap: 5px; padding-top: 14px; }
+  .hardware-cluster::before,
+  .hardware-cluster::after,
+  .tv-lower-panel::before { display: none; }
+  .tv-lower-panel { min-height: 48px; padding-top: 9px; }
+  .tv-feet span { width: 19%; }
+}
+
+/* Standby signal presence: a sleeping broadcast monitor, not a new interface. */
+.tv-screen:not(.powered-on) .power-off-overlay {
+  background:
+    radial-gradient(ellipse at 48% 42%, rgba(62, 107, 103, .16), transparent 31%),
+    radial-gradient(ellipse at 79% 24%, rgba(226, 136, 67, .07), transparent 18%),
+    linear-gradient(118deg, rgba(143, 204, 193, .055) 0 7%, transparent 22% 77%, rgba(232, 141, 68, .045) 91%),
+    radial-gradient(ellipse at center, #111b1b 0%, #071011 58%, #010202 100%);
+  box-shadow: inset 0 0 46px rgba(0, 0, 0, .82), inset 0 0 16px rgba(84, 176, 167, .08);
+}
+
+.tv-screen:not(.powered-on) .power-off-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .18;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(164, 218, 204, .14) 4px, transparent 5px 8px),
+    linear-gradient(90deg, transparent 0 16%, rgba(106, 190, 185, .06) 48%, transparent 84%);
+  mix-blend-mode: screen;
+  animation: standby-scan 7s steps(8, end) infinite;
+}
+
+.tv-screen:not(.powered-on) .power-off-overlay::after {
+  content: "STANDBY  ·  SYNC HOLD";
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  color: rgba(171, 223, 207, .38);
+  font: 600 clamp(7px, .72vw, 11px)/1 "Courier New", monospace;
+  letter-spacing: .14em;
+  text-shadow: 0 0 7px rgba(104, 214, 202, .18);
+  animation: standby-breath 4.8s ease-in-out infinite;
+}
+
+@keyframes standby-scan {
+  0%, 100% { transform: translateY(-2%); opacity: .13; }
+  45% { transform: translateY(2%); opacity: .22; }
+}
+
+@keyframes standby-breath {
+  0%, 100% { opacity: .26; }
+  52% { opacity: .52; }
+}
+
+@media (max-width: 680px) {
+  .tv-screen:not(.powered-on) .power-off-overlay::after {
+    right: 9%;
+    bottom: 9%;
+    font-size: 7px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Remote material pass: matching broadcast-terminal controller                */
+/* -------------------------------------------------------------------------- */
+
+.remote-wrap {
+  filter:
+    drop-shadow(8px 18px 17px rgba(0, 0, 0, .62))
+    drop-shadow(-3px 0 8px rgba(77, 183, 186, .08))
+    drop-shadow(3px 1px 8px rgba(230, 137, 61, .08));
+}
+
+.remote-control {
+  isolation: isolate;
+  border-color: rgba(161, 198, 193, .2);
+  background:
+    linear-gradient(90deg, rgba(86, 190, 191, .07), transparent 12% 85%, rgba(232, 144, 64, .08)),
+    repeating-linear-gradient(32deg, rgba(218, 236, 221, .025) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, #252c2b 0%, #161c1d 39%, #090c0d 100%);
+  box-shadow:
+    inset 1px 1px rgba(223, 244, 225, .12),
+    inset -4px -5px 11px rgba(0, 0, 0, .78),
+    inset 8px 0 13px rgba(76, 178, 180, .035),
+    inset -8px 0 13px rgba(233, 131, 55, .04),
+    0 1px 0 rgba(221, 167, 97, .2),
+    0 26px 35px rgba(0, 0, 0, .7),
+    0 6px 12px rgba(0, 0, 0, .74);
+}
+
+/* Inset service channel; it adds depth without affecting control placement. */
+.remote-control::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 11px 9px;
+  border: 1px solid rgba(155, 197, 190, .075);
+  border-radius: 24px 24px 19px 19px;
+  background:
+    linear-gradient(90deg, rgba(89, 192, 192, .065), transparent 12% 88%, rgba(234, 142, 59, .06)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(187, 210, 195, .022) 32px 33px, transparent 34px 64px);
+  box-shadow: inset 0 0 17px rgba(0, 0, 0, .38);
+  pointer-events: none;
+}
+
+.remote-control::after {
+  border-color: rgba(222, 242, 225, .07);
+  box-shadow:
+    inset 1px 0 rgba(88, 191, 191, .08),
+    inset -1px 0 rgba(237, 142, 61, .08),
+    inset 0 0 17px rgba(0, 0, 0, .26);
+}
+
+.remote-sensor {
+  position: relative;
+  border: 1px solid rgba(85, 179, 180, .2);
+  background:
+    linear-gradient(90deg, rgba(87, 190, 191, .18), transparent 28% 72%, rgba(230, 132, 57, .13)),
+    linear-gradient(180deg, #182324, #020405);
+  box-shadow:
+    inset 0 1px 2px rgba(185, 238, 221, .12),
+    inset 0 -2px 3px rgba(0, 0, 0, .76),
+    0 0 10px rgba(80, 183, 185, .07);
+}
+
+.remote-sensor::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: rgba(128, 213, 205, .72);
+  box-shadow: -5px 0 rgba(232, 145, 64, .52), -10px 0 rgba(185, 203, 184, .32), 0 0 4px rgba(98, 208, 203, .42);
+}
+
+.remote-label {
+  color: #d2d8ca;
+  text-shadow: 1px 0 rgba(76, 183, 184, .2), 0 1px rgba(224, 135, 58, .13), 0 2px 2px #000;
+}
+
+.remote-btn {
+  border-color: rgba(184, 209, 196, .16);
+  color: #e2e5dc;
+  background:
+    linear-gradient(100deg, rgba(89, 191, 191, .08), transparent 22% 79%, rgba(229, 137, 58, .08)),
+    linear-gradient(180deg, #3a4544 0%, #1c2526 47%, #111617 100%);
+  box-shadow:
+    inset 0 1px rgba(229, 245, 227, .13),
+    inset 1px 0 rgba(96, 190, 190, .055),
+    inset -1px 0 rgba(235, 144, 62, .05),
+    0 4px 0 #07090a,
+    0 7px 11px rgba(0, 0, 0, .56);
+}
+
+.remote-btn:hover { filter: brightness(1.1) saturate(1.06); }
+.remote-btn:focus-visible { outline-color: rgba(122, 214, 208, .82); }
+
+.remote-btn:active,
+.remote-btn.is-pressed {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, .66),
+    inset 0 0 0 1px rgba(92, 187, 187, .09),
+    0 1px 0 #050607;
+}
+
+.remote-btn--power {
+  border-color: rgba(255, 174, 128, .34);
+  background:
+    radial-gradient(circle at 38% 29%, rgba(255, 225, 191, .44) 0 4%, transparent 5%),
+    linear-gradient(180deg, #c9553c, #6f241d 78%);
+  box-shadow:
+    inset 0 1px rgba(255, 239, 218, .3),
+    inset -2px -3px 4px rgba(72, 12, 10, .42),
+    0 4px 0 #42120f,
+    0 7px 11px rgba(0, 0, 0, .55),
+    0 0 13px rgba(232, 82, 48, .14);
+}
+
+.rocker-mid {
+  color: #cbd2c7;
+  border-top: 1px solid rgba(91, 184, 185, .13);
+  border-bottom: 1px solid rgba(224, 134, 58, .12);
+  background:
+    linear-gradient(90deg, rgba(79, 181, 183, .07), transparent 47%, rgba(227, 133, 58, .07)),
+    linear-gradient(180deg, #12191a, #060809);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .82);
+}
+
+.chevron {
+  border-color: #dce6dc;
+  filter: drop-shadow(1px 0 rgba(70, 183, 184, .22)) drop-shadow(0 1px rgba(224, 133, 57, .14));
+}
+
+.remote-btn--utility.active {
+  color: #f7dfaa;
+  border-color: rgba(227, 165, 87, .3);
+  background:
+    linear-gradient(100deg, rgba(80, 180, 181, .1), transparent 28% 74%, rgba(236, 151, 64, .16)),
+    linear-gradient(180deg, #665036, #2c271f);
+  box-shadow: inset 0 1px rgba(255, 238, 198, .16), 0 4px 0 #13110e, 0 0 12px rgba(220, 143, 57, .11);
+}
+
+.remote-btn--random.active {
+  color: #d9f0ca;
+  border-color: rgba(150, 199, 118, .28);
+  background:
+    linear-gradient(100deg, rgba(80, 190, 188, .09), transparent 38%, rgba(134, 180, 83, .15)),
+    linear-gradient(180deg, #526e43, #263426);
+  box-shadow: inset 0 1px rgba(231, 250, 217, .14), 0 4px 0 #131d13, 0 0 10px rgba(105, 175, 117, .12);
+}
+
+.remote-btn--room {
+  border-color: rgba(182, 204, 194, .18);
+  color: #d9ded4;
+  background:
+    linear-gradient(90deg, rgba(76, 181, 182, .09), transparent 46%, rgba(226, 137, 60, .1)),
+    linear-gradient(180deg, #2c3736, #101516);
+}
+
+@media (max-width: 680px) {
+  .remote-control::before { border-radius: 15px; }
+  .remote-control::after { border-color: rgba(218, 240, 222, .06); }
+  .remote-sensor::after { right: 5px; }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Motion polish: slow physical response, never a competing visual layer      */
+/* -------------------------------------------------------------------------- */
+
+/* Preserve the existing power-on/off sequence; breathe only after it settles. */
+.tv-screen.powered-on:not(.powering-on):not(.powering-off) {
+  animation: tube-breathe 8.5s ease-in-out infinite;
+}
+
+.tv-screen.powered-on:not(.filters-off) .scanlines {
+  animation: phosphor-drift 9s steps(12, end) infinite;
+}
+
+.tv-screen.powered-on:not(.filters-off) .glass-reflection {
+  transform-origin: 50% 50%;
+  animation: glass-shift 12s ease-in-out infinite;
+}
+
+.tv-screen.powered-on:not(.filters-off) .screen-glare {
+  animation: glare-settle 10s ease-in-out infinite;
+}
+
+.tv-screen.powered-on:not(.filters-off) .crt-vignette {
+  animation: phosphor-flicker 13s steps(10, end) infinite;
+}
+
+.brand-light.on {
+  animation: status-breathe 3.8s ease-in-out infinite;
+}
+
+.remote-sensor::after {
+  animation: sensor-heartbeat 5.5s ease-in-out infinite;
+}
+
+/* Existing .is-pressed state becomes a brief, localized electrical response. */
+.console:has(.remote-btn.is-pressed) .tv-shell {
+  box-shadow:
+    inset 0 2px 1px rgba(255,255,255,.08),
+    inset 4px 0 5px rgba(255,255,255,.025),
+    inset -7px -9px 13px rgba(0,0,0,.5),
+    0 20px 18px rgba(0,0,0,.4),
+    0 56px 90px rgba(0,0,0,.42),
+    0 0 18px rgba(80, 190, 190, .11),
+    0 0 11px rgba(230, 134, 55, .08);
+}
+
+.console:has(.remote-btn.is-pressed) .remote-control {
+  box-shadow:
+    inset 1px 1px rgba(223, 244, 225, .12),
+    inset -4px -5px 11px rgba(0, 0, 0, .78),
+    inset 8px 0 13px rgba(76, 178, 180, .05),
+    inset -8px 0 13px rgba(233, 131, 55, .06),
+    0 1px 0 rgba(221, 167, 97, .2),
+    0 26px 35px rgba(0, 0, 0, .7),
+    0 0 14px rgba(78, 183, 183, .1);
+}
+
+.room:has(.remote-btn.is-pressed) .room-glow {
+  opacity: .94;
+  filter: blur(38px);
+}
+
+.remote-btn,
+.tv-shell,
+.remote-control,
+.room-glow {
+  transition: box-shadow .16s ease, filter .16s ease, opacity .2s ease;
+}
+
+@keyframes tube-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 0, 0, .84),
+      inset 0 0 52px 18px rgba(0, 0, 0, .92),
+      inset 0 0 12px 2px rgba(184, 235, 220, .2),
+      0 0 0 3px rgba(10, 10, 10, .86),
+      0 0 27px rgba(72, 197, 194, .2);
+  }
+  48% {
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 0, 0, .84),
+      inset 0 0 52px 18px rgba(0, 0, 0, .91),
+      inset 0 0 15px 3px rgba(194, 238, 218, .24),
+      0 0 0 3px rgba(10, 10, 10, .86),
+      0 0 31px rgba(78, 204, 199, .24);
+  }
+  66% {
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 0, 0, .84),
+      inset 0 0 53px 18px rgba(0, 0, 0, .93),
+      inset 0 0 10px 2px rgba(177, 224, 210, .17),
+      0 0 0 3px rgba(10, 10, 10, .86),
+      0 0 25px rgba(67, 181, 180, .18);
+  }
+}
+
+@keyframes phosphor-drift {
+  0%, 100% { background-position: 0 0; opacity: .60; }
+  46% { background-position: 0 5px; opacity: .64; }
+  61% { background-position: 0 2px; opacity: .59; }
+}
+
+@keyframes glass-shift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); opacity: .88; }
+  45% { transform: translate3d(.7%, .35%, 0) rotate(-7.2deg); opacity: .8; }
+  72% { transform: translate3d(-.35%, .12%, 0) rotate(-8.4deg); opacity: .85; }
+}
+
+@keyframes glare-settle {
+  0%, 100% { opacity: .86; }
+  52% { opacity: .78; }
+  67% { opacity: .83; }
+}
+
+@keyframes phosphor-flicker {
+  0%, 100% { opacity: 1; }
+  49% { opacity: .985; }
+  53% { opacity: .955; }
+  56% { opacity: .99; }
+}
+
+@keyframes status-breathe {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 86, 52, .88), 0 0 13px rgba(242, 75, 42, .58), 0 0 22px rgba(78, 189, 193, .14); }
+  52% { box-shadow: 0 0 7px rgba(255, 98, 60, 1), 0 0 17px rgba(242, 75, 42, .72), 0 0 25px rgba(78, 189, 193, .22); }
+}
+
+@keyframes sensor-heartbeat {
+  0%, 100% { opacity: .66; }
+  49% { opacity: .66; }
+  53% { opacity: .9; }
+  58% { opacity: .7; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-screen.powered-on:not(.powering-on):not(.powering-off),
+  .tv-screen.powered-on:not(.filters-off) .scanlines,
+  .tv-screen.powered-on:not(.filters-off) .glass-reflection,
+  .tv-screen.powered-on:not(.filters-off) .screen-glare,
+  .tv-screen.powered-on:not(.filters-off) .crt-vignette,
+  .brand-light.on,
+  .remote-sensor::after {
+    animation: none !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Two-state room system: BLACK / SIGNAL ROOM                                 */
+/* -------------------------------------------------------------------------- */
+
+body::before,
+body::after {
+  display: none;
+}
+
+body[data-ambience="black"],
+body[data-ambience="black"] .room {
+  background: #000;
+}
+
+body[data-ambience="black"] .room::before,
+body[data-ambience="black"] .room::after,
+body[data-ambience="black"] .room-glow {
+  display: none;
+}
+
+body[data-ambience="signal-room"] {
+  background: #010303;
+}
+
+body[data-ambience="signal-room"] .room {
+  background: #010303;
+}
+
+/* The room itself is a standalone environment asset; the TV and remote remain
+   live foreground components. */
+body[data-ambience="signal-room"] .room::before {
+  display: block;
+  inset: -1.2%;
+  opacity: 1;
+  background: #040606 url("assets/signal-room.png") center center / cover no-repeat;
+  filter: blur(.35px) brightness(.82) saturate(.9) contrast(1.05);
+  transform: scale(1.012);
+  transform-origin: center;
+}
+
+/* Restrained lens falloff and practical-light integration over the asset. */
+body[data-ambience="signal-room"] .room::after {
+  display: block;
+  inset: 0;
+  opacity: 1;
+  background:
+    radial-gradient(ellipse at 17% 45%, rgba(226, 127, 49, .12), transparent 30%),
+    radial-gradient(ellipse at 82% 43%, rgba(62, 169, 175, .11), transparent 32%),
+    linear-gradient(180deg, rgba(1, 3, 4, .12) 0%, transparent 31%, rgba(0, 0, 0, .08) 67%, rgba(0, 0, 0, .42) 100%),
+    radial-gradient(ellipse at center, transparent 46%, rgba(0, 0, 0, .14) 70%, rgba(0, 0, 0, .58) 112%);
+}
+
+body[data-ambience="signal-room"] .room-glow {
+  display: block;
+  opacity: .68;
+  filter: blur(42px);
+  background:
+    radial-gradient(ellipse at 31% 49%, rgba(227, 127, 46, .12), transparent 31%),
+    radial-gradient(ellipse at 69% 46%, rgba(65, 174, 178, .13), transparent 34%),
+    radial-gradient(ellipse at 50% 52%, rgba(141, 165, 151, .045), transparent 66%);
+}
+
+body[data-ambience="signal-room"] .room:has(.tv-screen.powered-on) .room-glow {
+  opacity: .88;
+  filter: blur(34px);
+}
+
+body[data-ambience="signal-room"] .room:has(.remote-btn.is-pressed) .room-glow {
+  opacity: .8;
+  filter: blur(38px);
+}
+
+@media (max-width: 680px) {
+  .console {
+    width: min(96vw, 600px);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .remote-wrap {
+    width: 100%;
+  }
+
+  body[data-ambience="signal-room"] .room::before {
+    inset: -1%;
+    background-position: 50% center;
+    filter: blur(.3px) brightness(.74) saturate(.84) contrast(1.06);
+  }
+
+  body[data-ambience="signal-room"] .room::after {
+    background:
+      radial-gradient(ellipse at 16% 38%, rgba(226, 127, 49, .09), transparent 34%),
+      radial-gradient(ellipse at 84% 38%, rgba(62, 169, 175, .09), transparent 35%),
+      linear-gradient(180deg, rgba(0, 2, 3, .12), transparent 28%, rgba(0, 0, 0, .14) 68%, rgba(0, 0, 0, .52) 100%),
+      radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, .22) 75%, rgba(0, 0, 0, .6) 112%);
+  }
+
+  body[data-ambience="signal-room"] .room-glow {
+    width: 112vw;
+    opacity: .56;
+  }
+}
+
+/* Remote layout correction: composition only, preserving the existing visual
+   treatment, labels, states, and interaction hooks. */
+.remote-btn--power {
+  left: 50%;
+  right: auto;
+  transform: translateX(calc(-50% - clamp(4px, .4vw, 7px)));
+}
+
+.remote-btn--power:active,
+.remote-btn--power.is-pressed {
+  transform: translateX(calc(-50% - clamp(4px, .4vw, 7px))) translateY(3px);
+}
+
+@media (max-width: 680px) {
+  .remote-control {
+    grid-template-columns: clamp(44px, 16%, 62px) minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto auto;
+    grid-template-areas:
+      "sensor sensor sensor"
+      "power channel volume"
+      "actions actions actions"
+      "room room room";
+    align-items: center;
+    gap: 9px 10px;
+  }
+
+  .remote-sensor {
+    grid-area: sensor;
+  }
+
+  .remote-btn--power {
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    grid-area: power;
+    justify-self: center;
+    transform: none;
+  }
+
+  .remote-btn--power:active,
+  .remote-btn--power.is-pressed {
+    transform: translateY(3px);
+  }
+
+  .remote-section:first-of-type {
+    grid-area: channel;
+    margin-top: 0;
+  }
+
+  .remote-section--volume {
+    grid-area: volume;
+    margin-top: 0;
+  }
+
+  .remote-actions {
+    grid-area: actions;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .remote-btn--room {
+    grid-area: room;
+    width: 100%;
+  }
+}
+
+/* Fullscreen composition: give the receiver more of the viewport while the
+   remote remains a narrower secondary column. */
+.room:fullscreen .console {
+  grid-template-columns: minmax(0, 1fr) clamp(170px, 13vw, 194px);
+  gap: clamp(20px, 2.2vw, 32px);
+  transform: scale(1.16);
+  transform-origin: center center;
+}
+
+@media (max-width: 680px) {
+  .room:fullscreen {
+    align-items: start;
+    overflow-y: auto;
+  }
+
+  .room:fullscreen .console {
+    width: min(96vw, 600px);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 19px;
+    transform: scale(1.1);
+    transform-origin: top center;
   }
 }

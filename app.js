@@ -15,11 +15,13 @@ function readStoredState() {
     if (typeof saved.channelId === "string") window.savedChannelId = saved.channelId;
     if (Array.isArray(saved.blocked)) saved.blocked.forEach(id => typeof id === "string" && blockedVideoIds.add(id));
     if (Array.isArray(saved.favorites)) saved.favorites.forEach(id => typeof id === "string" && favoriteVideoIds.add(id));
-    if (["dark", "warm", "basement", "blackout"].includes(saved.ambience)) setAmbience(saved.ambience, false);
+    if (["black", "signal-room"].includes(saved.ambience)) setAmbience(saved.ambience, false);
+    else if (saved.ambience === "blackout") setAmbience("black", false);
+    else if (["dark", "warm", "basement"].includes(saved.ambience)) setAmbience("signal-room", false);
   } catch (_) { /* Invalid local state must not stop the receiver. */ }
 }
 function persistState() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ muted: isMuted, random: isRandom, volume: player?.getVolume?.() ?? window.savedVolume ?? 70, channelId: videoList[currentChannelIndex], blocked: [...blockedVideoIds], favorites: [...favoriteVideoIds], ambience: document.body.dataset.ambience || "dark" })); } catch (_) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ muted: isMuted, random: isRandom, volume: player?.getVolume?.() ?? window.savedVolume ?? 70, channelId: videoList[currentChannelIndex], blocked: [...blockedVideoIds], favorites: [...favoriteVideoIds], ambience: document.body.dataset.ambience || "signal-room" })); } catch (_) {}
 }
 function shuffleArray(items) { for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; } return items; }
 async function loadVideoList() {
@@ -78,8 +80,8 @@ function toggleFavorite() { const id = videoList[currentChannelIndex]; if (!id) 
 function blockCurrentVideo() { const id = videoList[currentChannelIndex]; if (!id) return; blockedVideoIds.add(id); favoriteVideoIds.delete(id); persistState(); syncFavoriteUI(); changeChannel(1, true); }
 function toggleFullscreen() { const room = document.querySelector(".room"); if (!document.fullscreenEnabled || !room) return; document.fullscreenElement ? document.exitFullscreen() : room.requestFullscreen?.(); }
 function syncFullscreenControl() { const button = document.getElementById("btnFullscreen"); button?.toggleAttribute("disabled", !document.fullscreenEnabled); button?.setAttribute("aria-pressed", String(Boolean(document.fullscreenElement))); }
-function setAmbience(value, save = true) { document.body.dataset.ambience = value; const button = document.getElementById("btnRoom"); if (button) button.textContent = `ROOM: ${value.toUpperCase()}`; if (save) persistState(); }
-function cycleAmbience() { const modes = ["dark", "warm", "basement", "blackout"], current = document.body.dataset.ambience || "dark"; setAmbience(modes[(modes.indexOf(current) + 1) % modes.length]); }
+function setAmbience(value, save = true) { document.body.dataset.ambience = value; const button = document.getElementById("btnRoom"); if (button) button.textContent = value === "black" ? "ROOM: BLACK" : "ROOM: SIGNAL ROOM"; if (save) persistState(); }
+function cycleAmbience() { setAmbience(document.body.dataset.ambience === "black" ? "signal-room" : "black"); }
 function openHelp() { const modal = document.getElementById("helpModal"); if (!modal) return; modal.hidden = false; document.getElementById("btnHelpClose")?.focus(); }
 function closeHelp() { document.getElementById("helpModal")?.setAttribute("hidden", ""); document.getElementById("btnHelp")?.focus(); }
 function isEditable(target) { return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable; }
@@ -90,6 +92,6 @@ function initRemoteEvents() {
   bind("btnMute", () => { if (!player || !isPowerOn) return; isMuted = !isMuted; isMuted ? player.mute?.() : player.unMute?.(); syncMuteUI(); persistState(); }); bind("btnRandom", () => { isRandom = !isRandom; syncRandomUI(); persistState(); if (isPowerOn) showChannelOSD(); }); bind("btnFilter", toggleFilter); bind("btnFullscreen", toggleFullscreen); bind("btnFavorite", toggleFavorite); bind("btnSkip", blockCurrentVideo); bind("btnRoom", cycleAmbience); bind("btnHelp", openHelp); document.getElementById("btnHelpClose")?.addEventListener("click", closeHelp);
   document.getElementById("helpModal")?.addEventListener("click", event => { if (event.target.id === "helpModal") closeHelp(); }); document.addEventListener("fullscreenchange", syncFullscreenControl); document.addEventListener("visibilitychange", () => { if (document.hidden) stopNoise(); });
   document.addEventListener("keydown", event => { if (isEditable(event.target) || event.metaKey || event.ctrlKey || event.altKey) return; if (event.key === "Escape") return closeHelp(); const controls = { ArrowUp: ["btnChannelNext", () => changeChannel(1)], ArrowDown: ["btnChannelPrev", () => changeChannel(-1)], ArrowLeft: ["btnVolDown", () => changeVolume(-10)], ArrowRight: ["btnVolUp", () => changeVolume(10)], " ": ["btnPower", togglePower], m: ["btnMute", () => document.getElementById("btnMute")?.click()], f: ["btnFullscreen", toggleFullscreen], t: ["btnFilter", toggleFilter], "?": ["btnHelp", openHelp] }; const entry = controls[event.key.toLowerCase()] || controls[event.key]; if (!entry) return; event.preventDefault(); setPressedFeedback(document.getElementById(entry[0])); entry[1](); });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=7").catch(() => {}); loadVideoList();
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=8").catch(() => {}); loadVideoList();
 }
 document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", initRemoteEvents) : initRemoteEvents();
