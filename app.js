@@ -3,6 +3,7 @@ let videoList = ["dQw4w9WgXcQ", "L_LUpnjgPso", "9bZkp7q19f0", "w4m6N7Zk-yM", "fC
 let player, currentChannelIndex = 0, isPowerOn = false, isMuted = false, isRandom = true, isFilterOn = true;
 let apiReady = false, listReady = false, playerRequested = false, osdTimer, noiseInterval, transitionTimer, pendingRandomStartId, audioCtx;
 const STORAGE_KEY = "retro-signal-tv-state-v1", MAX_CHANNEL_ATTEMPTS = 120;
+const CHANNEL_TRANSITION_MS = 900, PLAYING_SETTLE_MS = 180;
 const invalidVideoIds = new Set(), blockedVideoIds = new Set(), favoriteVideoIds = new Set();
 const videoPlaybackTimes = {}, hasRandomSeeked = {};
 const canvas = document.getElementById("noiseCanvas"), ctx = canvas?.getContext("2d");
@@ -80,8 +81,9 @@ function onPlayerStateChange(event) {
   }
   if (event.data === YT.PlayerState.PLAYING && isPowerOn && id) {
     clearTimeout(transitionTimer);
-    // Keep the CRT transition over YouTube's transient play/pause and branding UI.
-    transitionTimer = setTimeout(endTransition, 1600);
+    // Playback can arrive before the fixed CRT transition has completed, but it
+    // must never extend the transition beyond its short, intentional duration.
+    transitionTimer = setTimeout(endTransition, PLAYING_SETTLE_MS);
   }
   const endedState = window.YT?.PlayerState?.ENDED ?? 0;
   if (event.data === endedState && isPowerOn && id && (!activePlayerId || activePlayerId === id)) {
@@ -95,7 +97,7 @@ function onPlayerError() { const failed = videoList[currentChannelIndex]; if (!f
 function isPlayable(id) { return id && !invalidVideoIds.has(id) && !blockedVideoIds.has(id); }
 function findNextPlayableIndex(direction, start = currentChannelIndex) { if (!videoList.length) return null; const step = direction === 0 ? 1 : Math.sign(direction), attempts = Math.min(videoList.length, MAX_CHANNEL_ATTEMPTS); for (let attempt = direction === 0 ? 0 : 1; attempt <= attempts; attempt++) { const index = (start + step * attempt + videoList.length) % videoList.length; if (isPlayable(videoList[index])) return index; } return null; }
 function saveCurrentPlaybackPosition() { const id = videoList[currentChannelIndex]; if (player?.getCurrentTime && player?.getPlayerState?.() !== -1 && id) videoPlaybackTimes[id] = player.getCurrentTime() || 0; }
-function startTransition(kind) { const screen = document.getElementById("tvScreen"); if (!screen) return; clearTimeout(transitionTimer); const variants = ["static", "sync-tear", "vertical-roll", "flash", "rgb-split", "black-snap"]; screen.dataset.transition = kind || variants[Math.floor(Math.random() * variants.length)]; screen.classList.add("transitioning"); startNoise(); transitionTimer = setTimeout(endTransition, 5000); }
+function startTransition(kind) { const screen = document.getElementById("tvScreen"); if (!screen) return; clearTimeout(transitionTimer); const variants = ["static", "sync-tear", "vertical-roll", "flash", "rgb-split", "black-snap"]; screen.dataset.transition = kind || variants[Math.floor(Math.random() * variants.length)]; screen.classList.add("transitioning"); startNoise(); transitionTimer = setTimeout(endTransition, CHANNEL_TRANSITION_MS); }
 function endTransition() { clearTimeout(transitionTimer); const screen = document.getElementById("tvScreen"); screen?.classList.remove("transitioning"); if (screen) delete screen.dataset.transition; stopNoise(); }
 function changeChannel(direction, fromFailure = false) { if (!isPowerOn || !videoList.length) return; if (!fromFailure) saveCurrentPlaybackPosition(); const next = findNextPlayableIndex(direction); if (next === null) return showNoSignal(); currentChannelIndex = next; persistState(); playClick(); startTransition(); showChannelOSD(); syncFavoriteUI(); const id = videoList[currentChannelIndex], saved = videoPlaybackTimes[id]; setTimeout(() => loadChannelVideo(id, saved), 210); }
 function showNoSignal() { endTransition(); startNoise(); showChannelOSD("NO SIGNAL"); document.getElementById("tvScreen")?.classList.add("no-signal"); player?.stopVideo?.(); }
