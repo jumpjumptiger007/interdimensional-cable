@@ -40,8 +40,9 @@ function onYouTubeIframeAPIReady() { apiReady = true; tryInitPlayer(); }
 function tryInitPlayer() {
   if (!isPowerOn || !apiReady || !listReady || player || !videoList.length) return;
   const index = findNextPlayableIndex(0, currentChannelIndex); if (index === null) return showNoSignal(); currentChannelIndex = index;
-  // Keep the supported native player presentation minimal; required YouTube UI remains available.
-  const playerVars = { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, fs: 0 }; if (location.protocol.startsWith("http")) playerVars.origin = location.origin;
+  // Keep the iframe interactive so TV browsers have a native fallback when YouTube exposes controls.
+  // YouTube may still show branding or controls; those UI elements cannot be fully suppressed by the API.
+  const playerVars = { autoplay: 0, controls: 0, disablekb: 1, playsinline: 1, cc_load_policy: 0, iv_load_policy: 3, fs: 0, modestbranding: 1 }; if (location.protocol.startsWith("http")) playerVars.origin = location.origin;
   player = new YT.Player("player", { videoId: videoList[currentChannelIndex], playerVars, events: { onStateChange: onPlayerStateChange, onError: onPlayerError, onReady: onPlayerReady } });
 }
 function loadChannelVideo(id, saved) {
@@ -58,6 +59,8 @@ function loadChannelVideo(id, saved) {
 }
 function onPlayerReady() {
   if (!player) return;
+  const iframe = player.getIframe?.();
+  if (iframe) iframe.setAttribute("tabindex", "-1");
   player.setVolume(window.savedVolume ?? 70);
   if (isMuted) player.mute();
   startTransition("static");
