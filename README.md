@@ -1,16 +1,14 @@
 # InterDemTV by Adrian
 
-A retro web TV for surfing through strange corners of the internet, one channel at a time.
+An experimental broadcast interface for surfing through strange corners of the internet, one channel at a time.
 
-InterDemTV recreates the feel of channel surfing with a retro television, remote control, and a continuously changing lineup of YouTube-hosted videos. It is a non-commercial personal project built for exploration and fun.
+InterDemTV pairs an experimental phosphor broadcast interface with a separate remote control and a canonical lineup of YouTube-hosted videos. It is a non-commercial personal project built for exploration and fun.
 
 ## Features
 
-- Retro CRT-inspired TV and remote interface
-- Random and sequential channel surfing
-- Toggleable visual filters
-- Favorites and local channel skipping
-- Keyboard controls
+- Random or sequential channel navigation, with random starts on long videos in RND mode
+- CRT screen effects and a signal oscilloscope
+- Keyboard controls and fullscreen support
 - Responsive desktop and mobile layout
 
 ## Run locally

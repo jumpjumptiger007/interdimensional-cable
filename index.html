@@ -1,145 +1,137 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0908">
+  <meta name="theme-color" content="#050706">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>InterDemTV by Adrian</title>
   <link rel="icon" href="favicon.png" type="image/png">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=34">
 </head>
-<body data-ambience="signal-room">
-  <main class="room">
-    <div class="room-glow" aria-hidden="true"></div>
-    <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">?</button>
+<body>
+  <main class="environment" id="receiverEnvironment">
+    <div class="environment-3d" aria-hidden="true"></div>
+    <div class="environment-graphics" aria-hidden="true">
+      <div class="signal-field-sweep"></div>
+      <div class="environment-grid"></div>
+      <div class="field-title">INTERDEMTV</div>
+    </div>
+    <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">HELP <span aria-hidden="true">?</span></button>
 
-    <section class="console" aria-label="Retro Signal television">
-      <div class="tv-set" id="tvSet">
-        <div class="tv-shell">
-          <div class="tv-top-vents" aria-hidden="true"></div>
-
-          <div class="tv-face">
-            <div class="crt-frame">
-              <div class="crt-bezel">
-                <div class="tv-screen" id="tvScreen">
-                  <canvas id="noiseCanvas" aria-hidden="true"></canvas>
-                  <div class="power-off-overlay" id="powerOverlay" aria-hidden="true">
-                    <span class="power-off-dot"></span>
-                  </div>
-
-                  <div id="player"></div>
-
-                  <div class="channel-display" id="channelDisplay">CH 01</div>
-
-                  <div class="crt-vignette" aria-hidden="true"></div>
-                  <div class="scanlines" aria-hidden="true"></div>
-                  <div class="screen-glare" aria-hidden="true"></div>
-                  <div class="glass-reflection" aria-hidden="true"></div>
-                </div>
-              </div>
-            </div>
-
-            <aside class="tv-controls" aria-label="Television hardware">
-              <div class="speaker-grille speaker-grille--tall" aria-hidden="true"></div>
-
-              <div class="hardware-cluster">
-                <div class="hardware-label">POWER</div>
-                <div class="power-indicator" aria-hidden="true">
-                  <span class="brand-light" id="powerLed"></span>
-                </div>
-
-                <div class="dial" aria-hidden="true">
-                  <span class="dial-notch"></span>
-                </div>
-                <div class="hardware-label hardware-label--dial">TUNING</div>
-              </div>
-            </aside>
+    <div class="stage">
+      <section class="broadcast" aria-label="InterDemTV live broadcast">
+        <div class="broadcast-heading">
+          <div>
+            <p class="eyebrow">LIVE DEMO / INTERDIMENSIONAL CABLE</p>
+            <h1>INTERDEMTV</h1>
           </div>
+          <p class="heading-note">CHANNEL SURFING<br>WITHOUT A DESTINATION</p>
+        </div>
 
-          <div class="tv-lower-panel">
-            <div class="speaker-grille speaker-grille--wide" aria-hidden="true"></div>
+        <div class="monitor-aperture">
+          <div class="tv-screen filters-on" id="tvScreen" data-signal="off">
+            <canvas id="noiseCanvas" aria-hidden="true"></canvas>
+            <div class="power-off-overlay" id="powerOverlay" aria-hidden="true"><span></span></div>
+            <div id="player" aria-label="Live video"></div>
+            <div class="channel-display" id="channelDisplay" role="status" aria-live="polite">CH 001</div>
+            <div class="crt-vignette" aria-hidden="true"></div>
+            <div class="scanlines" aria-hidden="true"></div>
+          </div>
+          <div class="monitor-frame" aria-hidden="true"><span></span></div>
+        </div>
 
-            <div class="brand-plate">
-              <span class="brand-name">INTERDEMTV</span>
-              <span class="brand-sub">BY ADRIAN</span>
-              <span class="brand-mark" aria-hidden="true">
-                <i></i><i></i><i></i>
-              </span>
-            </div>
-
+        <div class="broadcast-foot">
+          <div class="channel-state">
+            <span class="metadata-label">CHANNEL</span>
+            <strong id="railChannel">CH 001</strong>
+          </div>
+          <div class="signal-state-line">
+            <i id="railSignalLed" aria-hidden="true"></i>
+            <span>SIGNAL / <b id="railSignalStatus">STANDBY</b></span>
           </div>
         </div>
 
-        <div class="tv-feet" aria-hidden="true">
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-
-      <aside class="remote-wrap">
-        <div class="remote-control" id="remoteControl" aria-label="Remote control">
-          <div class="remote-sensor" aria-hidden="true"></div>
-          <button class="remote-btn remote-btn--power" id="btnPower" type="button" aria-label="Power">
-            <span class="power-symbol" aria-hidden="true"></span>
-          </button>
-
-          <section class="remote-section" aria-label="Channel controls">
-            <span class="remote-label">CHANNEL</span>
-            <div class="rocker rocker--vertical">
-              <button class="remote-btn rocker-btn rocker-btn--top" id="btnChannelNext" type="button" aria-label="Next channel">
-                <span class="chevron chevron--up" aria-hidden="true"></span>
-              </button>
-              <div class="rocker-mid">CH</div>
-              <button class="remote-btn rocker-btn rocker-btn--bottom" id="btnChannelPrev" type="button" aria-label="Previous channel">
-                <span class="chevron chevron--down" aria-hidden="true"></span>
-              </button>
-            </div>
-          </section>
-
-          <section class="remote-section remote-section--volume" aria-label="Volume controls">
-            <span class="remote-label">VOLUME</span>
-            <div class="volume-row">
-              <button class="remote-btn remote-btn--small" id="btnVolDown" type="button" aria-label="Volume down">−</button>
-              <button class="remote-btn remote-btn--small" id="btnVolUp" type="button" aria-label="Volume up">+</button>
-            </div>
-          </section>
-
-          <div class="remote-actions">
-            <button class="remote-btn remote-btn--utility" id="btnMute" type="button" aria-label="Mute">
-              <span class="mute-icon" aria-hidden="true">◖</span>
-              <span>MUTE</span>
-            </button>
-
-            <button class="remote-btn remote-btn--random active" id="btnRandom" type="button" aria-label="Random start">
-              RND
-            </button>
-
-            <button class="remote-btn remote-btn--utility" id="btnFullscreen" type="button" aria-label="Toggle fullscreen">FULL</button>
-            <button class="remote-btn remote-btn--utility" id="btnFavorite" type="button" aria-label="Favorite current channel" aria-pressed="false">FAV</button>
-            <button class="remote-btn remote-btn--utility remote-btn--skip" id="btnSkip" type="button" aria-label="Skip this channel forever">SKIP</button>
-            <button class="remote-btn remote-btn--utility active" id="btnFilter" type="button" aria-label="Toggle screen filters" aria-pressed="true">FILTER</button>
+        <aside class="signal-strip" id="signalModule" data-signal="off" aria-label="Signal oscilloscope">
+          <div class="signal-strip__heading"><span>SIGNAL</span><b id="scopeStatus" role="status" aria-live="polite">STANDBY</b></div>
+          <div class="scope-window">
+            <svg viewBox="0 0 100 60" preserveAspectRatio="none" aria-label="Signal waveform" role="img">
+              <path class="scope-grid" d="M0 0V60 M10 0V60 M20 0V60 M30 0V60 M40 0V60 M50 0V60 M60 0V60 M70 0V60 M80 0V60 M90 0V60 M100 0V60 M0 0H100 M0 10H100 M0 20H100 M0 30H100 M0 40H100 M0 50H100 M0 60H100" />
+              <path class="scope-axis" d="M50 0V60 M0 30H100" />
+              <g class="scope-motion">
+                <path class="scope-wave scope-wave--stable" id="scopeWave" d="M0 30 C8 20 16 20 24 30 S40 40 48 30 S64 20 72 30 S88 40 100 30" />
+                <path class="scope-wave scope-wave--unstable" d="M0 31 L6 24 L10 37 L16 27 L21 32 L27 19 L31 40 L38 27 L43 35 L49 21 L55 38 L60 26 L65 33 L71 17 L77 42 L83 25 L89 35 L94 28 L100 31" />
+                <path class="scope-wave scope-wave--lost" d="M0 30 H100" />
+              </g>
+            </svg>
           </div>
+        </aside>
+      </section>
 
-          <button class="remote-btn remote-btn--room" id="btnRoom" type="button" aria-label="Toggle between black and signal room">ROOM: SIGNAL ROOM</button>
+      <aside class="remote-wrap" aria-label="Remote control">
+        <div class="remote-heading"><span>REMOTE</span><span>CONTROL</span></div>
+        <div class="remote-power-row">
+          <button class="power-key" id="btnPower" type="button" aria-label="Power" aria-pressed="false"><span aria-hidden="true"></span></button>
+          <span class="remote-power-state">RECEIVER <b id="powerState">OFF</b></span>
+        </div>
+
+        <section class="remote-cluster" aria-label="Channel controls">
+          <span class="remote-caption">CHANNEL</span>
+          <button class="control-key" id="btnChannelNext" type="button" aria-label="Next channel"><span>CHANNEL UP</span><b aria-hidden="true">↑</b></button>
+          <button class="control-key" id="btnChannelPrev" type="button" aria-label="Previous channel"><span>CHANNEL DOWN</span><b aria-hidden="true">↓</b></button>
+        </section>
+
+        <section class="remote-cluster" aria-label="Volume controls">
+          <span class="remote-caption">VOLUME</span>
+          <button class="control-key" id="btnVolDown" type="button" aria-label="Volume down"><span>VOLUME −</span><b aria-hidden="true">−</b></button>
+          <button class="control-key" id="btnVolUp" type="button" aria-label="Volume up"><span>VOLUME +</span><b aria-hidden="true">+</b></button>
+          <button class="control-key control-key--mute" id="btnMute" type="button" aria-label="Mute" aria-pressed="false"><span>MUTE</span><b id="muteState" aria-hidden="true">OFF</b></button>
+        </section>
+
+        <div class="remote-utilities" aria-label="Receiver settings">
+          <button class="remote-mode" id="btnRandom" type="button" aria-label="Random channel navigation" aria-pressed="true"><span>MODE</span><b id="randomState">RND</b></button>
+          <button class="remote-mode" id="btnFilter" type="button" aria-label="CRT filter" aria-pressed="true"><span>FILTER</span><b id="filterState">ON</b></button>
+          <button class="remote-mode" id="btnFullscreen" type="button" aria-label="Toggle fullscreen" aria-pressed="false"><span>FULLSCREEN</span><b aria-hidden="true">↗</b></button>
+          <button class="remote-mode" id="btnHelpRemote" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal"><span>HELP</span><b aria-hidden="true">?</b></button>
         </div>
       </aside>
-    </section>
+    </div>
 
-    <section class="help-modal" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
-      <div class="help-modal__panel">
-        <button class="help-modal__close" id="btnHelpClose" type="button" aria-label="Close help">×</button>
-        <p class="help-modal__eyebrow">INTERDEMTV BY ADRIAN</p>
-        <h1 id="helpTitle">Receiver guide</h1>
-        <div class="help-modal__grid">
-          <section><h2>Remote</h2><p><b>POWER</b> start or stop playback.</p><p><b>CHANNEL</b> move through the shuffled channel list.</p><p><b>VOLUME / MUTE</b> adjust or silence audio.</p><p><b>RND / SEQ</b> preserve random-start or normal-start behavior.</p></section>
-          <section><h2>Utilities</h2><p><b>FULL</b> enter fullscreen.</p><p><b>FAV</b> save this channel locally.</p><p><b>SKIP</b> permanently hide this channel locally.</p><p><b>FILTER</b> turn CRT screen effects on or off for a clearer picture.</p><p><b>ROOM</b> toggle BLACK / SIGNAL ROOM.</p></section>
-          <section><h2>Keyboard</h2><p><b>↑ / ↓</b> channel up / down</p><p><b>← / →</b> volume down / up</p><p><b>Space</b> power</p><p><b>M</b> mute · <b>F</b> fullscreen · <b>T</b> FILTER · <b>?</b> help</p></section>
+    <dialog class="help-dialog" id="helpModal" aria-labelledby="helpTitle">
+      <div class="help-dialog__panel">
+        <button class="help-dialog__close" id="btnHelpClose" type="button" aria-label="Close help">×</button>
+        <p class="help-eyebrow">INTERDEMTV / RECEIVER GUIDE</p>
+        <h2 id="helpTitle">Find your signal.</h2>
+        <div class="help-grid">
+          <section class="help-section">
+            <h3>Receiver</h3>
+            <p><b>POWER</b><span>Start or pause playback.</span></p>
+            <p><b>CHANNEL</b><span>Move between channels in random or canonical order.</span></p>
+            <p><b>VOLUME</b><span>Adjust playback level or mute it.</span></p>
+          </section>
+          <section class="help-section">
+            <h3>Modes</h3>
+            <p><b>RND</b><span>Choose a random channel; long videos may start at a random point.</span></p>
+            <p><b>SEQ</b><span>Move through canonical channel order; new videos start normally.</span></p>
+            <p><b>FILTER</b><span>Toggle fine scanlines, vignette and phosphor softness.</span></p>
+            <p><b>FULLSCREEN</b><span>Expand the receiver to fill the screen.</span></p>
+          </section>
+          <section class="help-section">
+            <h3>Keyboard</h3>
+            <p><b>↑ / ↓</b><span>Next / previous channel</span></p>
+            <p><b>← / →</b><span>Volume down / up</span></p>
+            <p><b>SPACE</b><span>Power</span></p>
+            <p><b>M · F · T · ?</b><span>Mute · fullscreen · filter · help</span></p>
+            <p><b>ESC</b><span>Close help</span></p>
+          </section>
         </div>
       </div>
-    </section>
+    </dialog>
   </main>
-
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=34"></script>
 </body>
 </html>
