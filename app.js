@@ -426,7 +426,7 @@ function initRemoteEvents() {
     setPressedFeedback(document.getElementById(entry[0]));
     entry[1]();
   });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=40").catch(() => {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=41").catch(() => {});
   loadVideoList();
 }
 
