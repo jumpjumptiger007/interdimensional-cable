@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=40">
 </head>
 <body>
   <main class="environment" id="receiverEnvironment">
@@ -19,7 +19,6 @@
     <div class="environment-graphics" aria-hidden="true">
       <div class="signal-field-sweep"></div>
       <div class="environment-grid"></div>
-      <div class="field-title">INTERDEMTV</div>
     </div>
     <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">HELP <span aria-hidden="true">?</span></button>
 
@@ -35,8 +34,6 @@
 
         <div class="monitor-aperture">
           <div class="tv-screen filters-on" id="tvScreen" data-signal="off">
-            <canvas id="noiseCanvas" aria-hidden="true"></canvas>
-            <div class="power-off-overlay" id="powerOverlay" aria-hidden="true"><span></span></div>
             <div id="player" aria-label="Live video"></div>
             <div class="channel-display" id="channelDisplay" role="status" aria-live="polite">CH 001</div>
             <div class="crt-vignette" aria-hidden="true"></div>
@@ -87,8 +84,8 @@
 
         <section class="remote-cluster" aria-label="Volume controls">
           <span class="remote-caption">VOLUME</span>
-          <button class="control-key" id="btnVolDown" type="button" aria-label="Volume down"><span>VOLUME −</span><b aria-hidden="true">−</b></button>
           <button class="control-key" id="btnVolUp" type="button" aria-label="Volume up"><span>VOLUME +</span><b aria-hidden="true">+</b></button>
+          <button class="control-key" id="btnVolDown" type="button" aria-label="Volume down"><span>VOLUME −</span><b aria-hidden="true">−</b></button>
           <button class="control-key control-key--mute" id="btnMute" type="button" aria-label="Mute" aria-pressed="false"><span>MUTE</span><b id="muteState" aria-hidden="true">OFF</b></button>
         </section>
 
@@ -132,6 +129,7 @@
       </div>
     </dialog>
   </main>
-  <script src="app.js?v=34"></script>
+  <script src="app.js?v=40"></script>
+  <script type="module" src="environment-3d.js?v=40"></script>
 </body>
 </html>

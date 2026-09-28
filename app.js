@@ -1,12 +1,13 @@
 // InterDemTV: a small, static YouTube channel receiver.
 let videoList = ["dQw4w9WgXcQ", "L_LUpnjgPso", "9bZkp7q19f0", "w4m6N7Zk-yM", "fC7oUOUEEi4"];
 let player, currentChannelIndex = 0, isPowerOn = false, isMuted = false, isRandom = true, isFilterOn = true;
-let apiReady = false, listReady = false, playerRequested = false, osdTimer, noiseInterval, noiseTimer, transitionTimer, scopeAcquisitionTimer, pendingRandomStartId, audioCtx;
+let apiReady = false, listReady = false, playerRequested = false, osdTimer, transitionTimer, channelLoadTimer, powerTimer, scopeAcquisitionTimer, pendingRandomStartId, audioCtx;
 const STORAGE_KEY = "retro-signal-tv-state-v1";
-const NOISE_DURATION_MS = 240, TRANSITION_MAX_MS = 820;
+const CHANNEL_TRANSITION_MS = 300;
+const CHANNEL_LOAD_DELAY_MS = 135;
+const POWER_ON_MS = 440;
 const invalidVideoIds = new Set();
 const videoPlaybackTimes = {}, hasRandomSeeked = {};
-const canvas = document.getElementById("noiseCanvas"), ctx = canvas?.getContext("2d");
 const screen = document.getElementById("tvScreen"), signalModule = document.getElementById("signalModule");
 const scopeWave = document.getElementById("scopeWave");
 const WAVEFORM_PRESETS = [
@@ -116,30 +117,6 @@ function playClick(kind = "channel") {
   } catch (_) { /* Audio feedback is optional. */ }
 }
 function buzz() { try { navigator.vibrate?.(8); } catch (_) { /* Haptics are optional. */ } }
-function generateNoise() {
-  if (!canvas || !ctx || !isPowerOn || document.hidden) return;
-  const width = Math.max(1, Math.floor(canvas.clientWidth / 2));
-  const height = Math.max(1, Math.floor(canvas.clientHeight / 2));
-  if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
-  const image = ctx.createImageData(width, height), pixels = new Uint32Array(image.data.buffer);
-  for (let i = 0; i < pixels.length; i++) {
-    const n = Math.floor(Math.random() * 255);
-    pixels[i] = (255 << 24) | (n << 16) | (n << 8) | n;
-  }
-  ctx.putImageData(image, 0, 0);
-}
-function startNoise() {
-  if (!canvas || !isPowerOn) return;
-  canvas.classList.add("active");
-  generateNoise();
-  if (!noiseInterval) noiseInterval = setInterval(generateNoise, 55);
-}
-function stopNoise() {
-  clearTimeout(noiseTimer);
-  noiseTimer = null;
-  canvas?.classList.remove("active");
-  if (noiseInterval) { clearInterval(noiseInterval); noiseInterval = null; }
-}
 function requestPlayer() {
   if (playerRequested) return;
   playerRequested = true;
@@ -179,7 +156,6 @@ function onPlayerReady() {
   if (!player) return;
   player.setVolume(window.savedVolume ?? 70);
   if (isMuted) player.mute();
-  startTransition("static");
   loadChannelVideo(videoList[currentChannelIndex], videoPlaybackTimes[videoList[currentChannelIndex]]);
 }
 function onPlayerStateChange(event) {
@@ -238,25 +214,22 @@ function startTransition(kind) {
   if (!screen) return;
   clearTimeout(transitionTimer);
   transitionTimer = null;
-  stopNoise();
-  const variants = ["static", "sync-tear", "vertical-roll", "flash", "rgb-split", "black-snap"];
-  const transitionKind = kind || variants[Math.floor(Math.random() * variants.length)];
-  screen.dataset.transition = transitionKind;
+  screen.classList.remove("transitioning");
+  void screen.offsetWidth;
+  if (kind === "signal-lost") {
+    clearScopeAcquisition();
+    setSignalState("lost");
+    return;
+  }
   screen.classList.add("transitioning");
-  setSignalState(transitionKind === "signal-lost" ? "lost" : "seeking");
-  if (transitionKind === "signal-lost") clearScopeAcquisition();
-  else beginScopeAcquisition();
-  startNoise();
-  if (transitionKind === "signal-lost") return;
-  noiseTimer = setTimeout(stopNoise, NOISE_DURATION_MS);
-  transitionTimer = setTimeout(endTransition, TRANSITION_MAX_MS);
+  setSignalState("seeking");
+  beginScopeAcquisition();
+  transitionTimer = setTimeout(endTransition, CHANNEL_TRANSITION_MS);
 }
 function endTransition() {
   clearTimeout(transitionTimer);
   transitionTimer = null;
   screen?.classList.remove("transitioning");
-  if (screen) delete screen.dataset.transition;
-  stopNoise();
   if (isPowerOn && !screen?.classList.contains("no-signal") && player?.getPlayerState?.() === window.YT?.PlayerState?.PLAYING) setSignalState("locked");
 }
 function changeChannel(direction, fromFailure = false) {
@@ -271,12 +244,17 @@ function changeChannel(direction, fromFailure = false) {
   startTransition();
   showChannelOSD();
   const id = videoList[currentChannelIndex], saved = videoPlaybackTimes[id];
-  setTimeout(() => loadChannelVideo(id, saved), 210);
+  clearTimeout(channelLoadTimer);
+  channelLoadTimer = setTimeout(() => {
+    channelLoadTimer = null;
+    loadChannelVideo(id, saved);
+  }, CHANNEL_LOAD_DELAY_MS);
 }
 function showNoSignal() {
+  clearTimeout(channelLoadTimer);
+  channelLoadTimer = null;
   endTransition();
   clearScopeAcquisition();
-  startNoise();
   showChannelOSD("NO SIGNAL");
   screen?.classList.add("no-signal");
   setSignalState("no-signal");
@@ -294,34 +272,42 @@ function syncPowerUI() {
 }
 function togglePower() {
   isPowerOn = !isPowerOn;
+  clearTimeout(powerTimer);
+  powerTimer = null;
   playClick("power");
   buzz();
   syncPowerUI();
   if (isPowerOn) {
+    screen?.classList.remove("powering-off");
     screen?.classList.remove("no-signal");
     screen?.classList.add("powering-on");
-    startTransition("static");
+    beginScopeAcquisition();
     requestPlayer();
     showChannelOSD();
-    setTimeout(() => {
+    powerTimer = setTimeout(() => {
+      powerTimer = null;
       screen?.classList.remove("powering-on");
       tryInitPlayer();
       if (player && !pendingRandomStartId) player.playVideo?.();
-    }, 520);
+    }, POWER_ON_MS);
     return;
   }
   saveCurrentPlaybackPosition();
   persistState();
   clearTimeout(transitionTimer);
   transitionTimer = null;
+  clearTimeout(channelLoadTimer);
+  channelLoadTimer = null;
   pendingRandomStartId = null;
   screen?.classList.remove("transitioning");
-  if (screen) delete screen.dataset.transition;
+  screen?.classList.remove("powering-on");
   screen?.classList.add("powering-off");
-  stopNoise();
   setSignalState("off");
   player?.pauseVideo?.();
-  setTimeout(() => screen?.classList.remove("powering-off"), 380);
+  powerTimer = setTimeout(() => {
+    powerTimer = null;
+    screen?.classList.remove("powering-off");
+  }, 380);
 }
 function syncMuteUI() {
   const button = document.getElementById("btnMute");
@@ -418,7 +404,6 @@ function initRemoteEvents() {
   document.getElementById("btnHelpClose")?.addEventListener("click", closeHelp);
   document.getElementById("helpModal")?.addEventListener("close", restoreHelpFocus);
   document.addEventListener("fullscreenchange", syncFullscreenControl);
-  document.addEventListener("visibilitychange", () => { if (document.hidden) stopNoise(); });
   document.addEventListener("keydown", event => {
     if (isEditable(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
     const dialog = document.getElementById("helpModal");
@@ -441,7 +426,7 @@ function initRemoteEvents() {
     setPressedFeedback(document.getElementById(entry[0]));
     entry[1]();
   });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=34").catch(() => {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=40").catch(() => {});
   loadVideoList();
 }
 

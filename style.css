@@ -8,7 +8,6 @@
   --muted: #758077;
   --line: #213025;
   --green: #A6FF1A;
-  --ghost: #122117;
   --display: "Bricolage Grotesque", sans-serif;
   --sans: "Instrument Sans", sans-serif;
   --mono: "IBM Plex Mono", monospace;
@@ -48,7 +47,6 @@ button:disabled { opacity: .38; cursor: not-allowed; }
   --monitor-aperture: #090D0A;
   --remote-surface: #090D0A;
   --environment-sweep-opacity: .62;
-  --ghost-opacity: .42;
   --scope-grid: rgba(166, 255, 26, .095);
   background: var(--environment-field);
 }
@@ -59,6 +57,7 @@ button:disabled { opacity: .38; cursor: not-allowed; }
   pointer-events: none;
 }
 .environment-3d { z-index: 0; }
+.environment-3d canvas { display: block; width: 100%; height: 100%; pointer-events: none; }
 .environment-graphics { z-index: 1; overflow: hidden; }
 .signal-field-sweep {
   position: absolute;
@@ -68,6 +67,11 @@ button:disabled { opacity: .38; cursor: not-allowed; }
   transform: translateX(-16%);
   animation: signal-field-sweep 16s ease-in-out infinite;
 }
+body.webgl-active .signal-field-sweep {
+  animation: none;
+  transform: translateX(0);
+  opacity: .14;
+}
 .environment-grid {
   position: absolute;
   inset: 0;
@@ -76,18 +80,6 @@ button:disabled { opacity: .38; cursor: not-allowed; }
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 13% 78%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 13% 78%, transparent);
   opacity: var(--environment-grid-opacity);
-}
-.field-title {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  color: var(--ghost);
-  font: 700 clamp(95px, 18vw, 290px)/.8 var(--display);
-  letter-spacing: -.085em;
-  opacity: var(--ghost-opacity);
-  transform: translate(-48%, -53%);
-  white-space: nowrap;
-  user-select: none;
 }
 .page-help {
   position: absolute;
@@ -173,29 +165,22 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .monitor-frame { position: absolute; inset: 0; pointer-events: none; }
 .monitor-frame span { position: absolute; top: -1px; right: 11%; width: 34px; height: 1px; background: var(--interface-rule); transition: background-color .45s ease, box-shadow .45s ease, width .45s ease; }
 .monitor-aperture:has(.tv-screen[data-signal="locked"]) .monitor-frame span { width: 42px; background: var(--green); box-shadow: 0 0 4px rgba(166, 255, 26, .28); }
-#noiseCanvas, .power-off-overlay, .crt-vignette, .scanlines, .channel-display, .tv-screen::before, .tv-screen::after {
+.crt-vignette, .scanlines, .channel-display, .tv-screen::before, .tv-screen::after {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
-#noiseCanvas { z-index: 2; opacity: 0; image-rendering: pixelated; mix-blend-mode: screen; }
-#noiseCanvas.active { opacity: .22; }
-.power-off-overlay {
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  background: #070A08;
-  opacity: 1;
-  transition: opacity .35s ease;
-}
-.power-off-overlay span { width: 5px; height: 5px; background: var(--green); opacity: 0; box-shadow: 0 0 7px rgba(166, 255, 26, .48); }
-.tv-screen.powered-on .power-off-overlay { opacity: 0; }
-.tv-screen.powering-off .power-off-overlay { animation: screen-collapse .36s ease forwards; }
-.tv-screen:not(.powered-on) #player { opacity: 0; }
+.tv-screen:not(.powered-on):not(.powering-off) #player { opacity: 0; }
+.tv-screen.powering-off #player { opacity: 1; }
+.tv-screen.powering-on, .tv-screen.powering-off { transform-origin: center; will-change: transform; }
+.tv-screen.powering-on { animation: receiver-power-on .42s cubic-bezier(.2, .7, .18, 1) both; }
+.tv-screen.powering-on #player { animation: power-image-reveal .42s ease-out both; }
+.tv-screen.powering-off { animation: receiver-power-off .38s cubic-bezier(.55, 0, .8, .35) both; }
+.tv-screen.powering-on .channel-display, .tv-screen.powering-off .channel-display { opacity: 0; }
 .channel-display {
-  z-index: 4;
+  z-index: 6;
   inset: 13px auto auto 14px;
   width: max-content;
   height: auto;
@@ -216,22 +201,18 @@ button:disabled { opacity: .38; cursor: not-allowed; }
 .tv-screen.filters-off .crt-vignette, .tv-screen.filters-off .scanlines { opacity: 0; }
 .tv-screen.filters-on.powered-on:not(.transitioning) .scanlines { animation: phosphor-breathe 2.8s steps(2, end) infinite; }
 .tv-screen::before, .tv-screen::after { z-index: 2; content: ""; opacity: 0; }
-.tv-screen.transitioning[data-transition="static"] #noiseCanvas.active { opacity: .31; }
-.tv-screen.transitioning[data-transition="sync-tear"]::before {
-  opacity: .62;
-  background: linear-gradient(transparent 36%, rgba(166, 255, 26, .13) 36% 37%, rgba(237, 241, 236, .055) 37% 38%, transparent 38% 62%, rgba(237, 241, 236, .07) 62% 63%, transparent 63%);
-  animation: tear-slip .34s steps(3, end) infinite alternate;
+.tv-screen.transitioning::before { z-index: 4; background: #050706; animation: signal-acquisition-mask .3s ease-out both; }
+.tv-screen.powering-on::after, .tv-screen.powering-off::after {
+  z-index: 5;
+  inset: calc(50% - 1px) 3% auto;
+  width: auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(237, 241, 236, .34) 12%, rgba(237, 241, 236, .66) 50%, rgba(166, 255, 26, .16) 88%, transparent);
+  box-shadow: 0 0 4px rgba(209, 224, 207, .18);
 }
-.tv-screen.transitioning[data-transition="vertical-roll"]::before {
-  opacity: .4;
-  background: linear-gradient(transparent 20%, rgba(166, 255, 26, .12) 21%, transparent 22% 75%, rgba(237, 241, 236, .085) 76%, transparent 78%);
-  animation: roll-pass .72s linear infinite;
-}
-.tv-screen.transitioning[data-transition="flash"]::before { background: rgba(237, 241, 236, .58); animation: signal-flash .46s ease-out both; }
-.tv-screen.transitioning[data-transition="rgb-split"] #player { filter: drop-shadow(2px 0 rgba(166, 255, 26, .42)) drop-shadow(-2px 0 rgba(237, 241, 236, .2)); }
-.tv-screen.transitioning[data-transition="black-snap"]::before { z-index: 4; background: #050706; animation: black-snap .56s steps(1, end) both; }
+.tv-screen.powering-on::after { animation: power-line-on .42s ease-out both; }
+.tv-screen.powering-off::after { animation: power-line-off .38s ease-out both; }
 .tv-screen.no-signal #player { opacity: 0; }
-.tv-screen.no-signal #noiseCanvas { opacity: .26; }
 
 .broadcast-foot {
   display: flex;
@@ -418,11 +399,12 @@ body[data-signal="locked"] .remote-wrap::after { background: var(--green); box-s
 @keyframes phosphor-breathe { 0%, 100% { opacity: .58; } 50% { opacity: .7; } }
 @keyframes signal-field-sweep { 0%, 100% { transform: translateX(-16%); opacity: .24; } 50% { transform: translateX(16%); opacity: .66; } }
 @keyframes lost-trace { 0%, 100% { opacity: .38; } 50% { opacity: .68; } }
-@keyframes tear-slip { from { transform: translateY(-2px); } to { transform: translateY(3px); } }
-@keyframes roll-pass { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
-@keyframes signal-flash { 0% { opacity: .75; } 100% { opacity: 0; } }
-@keyframes black-snap { 0%, 30% { opacity: 1; } 31%, 100% { opacity: 0; } }
-@keyframes screen-collapse { 0% { transform: scaleY(1); opacity: .05; } 72% { transform: scaleY(.025); opacity: 1; } 100% { transform: scaleY(.01); opacity: 1; } }
+@keyframes signal-acquisition-mask { 0% { opacity: 0; } 16% { opacity: .94; } 52% { opacity: .94; } 100% { opacity: 0; } }
+@keyframes receiver-power-on { 0% { transform: scaleY(.012); } 18% { transform: scaleY(.045); } 100% { transform: scaleY(1); } }
+@keyframes power-image-reveal { 0%, 12% { opacity: 0; } 58% { opacity: .82; } 100% { opacity: 1; } }
+@keyframes receiver-power-off { 0% { transform: scaleY(1); } 100% { transform: scaleY(.012); } }
+@keyframes power-line-on { 0%, 8% { opacity: 0; transform: scaleY(83.333); } 18% { opacity: .72; transform: scaleY(22.222); } 68% { opacity: .38; transform: scaleY(1.6); } 100% { opacity: 0; transform: scaleY(1); } }
+@keyframes power-line-off { 0%, 10% { opacity: 0; transform: scaleY(1); } 27% { opacity: .42; transform: scaleY(1.18); } 80% { opacity: .66; transform: scaleY(3.3); } 100% { opacity: 0; transform: scaleY(83.333); } }
 
 @media (max-width: 760px) and (orientation: portrait) {
   .environment { padding: max(57px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(34px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); }
