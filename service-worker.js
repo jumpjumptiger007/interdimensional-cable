@@ -1,5 +1,5 @@
-const CACHE = "interdem-phosphor-3d-v41";
-const ASSETS = ["./", "index.html", "style.css?v=41", "app.js?v=41", "environment-3d.js?v=41", "videos.json", "manifest.webmanifest", "favicon.png"];
+const CACHE = "interdem-phosphor-3d-v42";
+const ASSETS = ["./", "index.html", "style.css?v=41", "app.js?v=41", "environment-3d.js?v=41", "videos.json", "manifest.webmanifest", "favicon.ico", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png", "android-chrome-192x192.png", "android-chrome-512x512.png"];
 self.addEventListener("install", event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting())));
 self.addEventListener("activate", event => event.waitUntil(caches.keys().then(keys => {
   const upgrading = keys.some(key => key !== CACHE && key.indexOf("interdem-phosphor-") === 0);
