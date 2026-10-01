@@ -202,12 +202,11 @@ function startEnvironment() {
       return;
     }
 
-    const moving = approachingTarget();
     const delta = lastFrame ? Math.min((now - lastFrame) / 1000, 0.25) : 0;
     lastFrame = now;
     if (!reducedMotion) elapsed += delta;
 
-    const easing = 1 - Math.exp(-delta * (reducedMotion ? 2.8 : 0.62));
+    const easing = 1 - Math.exp(-delta * (reducedMotion ? 2.8 : 1.8));
     const uniforms = material.uniforms;
     uniforms.uCoherence.value += (target.coherence - uniforms.uCoherence.value) * easing;
     uniforms.uDistortion.value += (target.distortion - uniforms.uDistortion.value) * easing;
@@ -216,7 +215,7 @@ function startEnvironment() {
     uniforms.uTime.value = elapsed;
     render();
 
-    if (!reducedMotion || moving) requestFrame();
+    if (approachingTarget()) requestFrame();
   };
 
   const init = async () => {
@@ -236,7 +235,7 @@ function startEnvironment() {
         uActivity: { value: target.activity },
         uSpeed: { value: target.speed },
         uFieldColor: { value: new THREE.Color("#3B563F") },
-        uSignalColor: { value: new THREE.Color("#A6FF1A") }
+        uSignalColor: { value: new THREE.Color("#77857A") }
       },
       vertexShader,
       fragmentShader,
@@ -278,11 +277,14 @@ function startEnvironment() {
     if (motionPreference?.addEventListener) motionPreference.addEventListener("change", onMotionPreferenceChange);
     else motionPreference?.addListener?.(onMotionPreferenceChange);
 
-    if (!reducedMotion && !document.hidden) requestFrame();
+    if (approachingTarget() && !document.hidden) requestFrame();
   };
 
   const onWindowResize = () => {
-    if (resize()) render();
+    if (resize()) {
+      render();
+      if (approachingTarget()) requestFrame();
+    }
   };
 
   const onVisibilityChange = () => {
@@ -309,8 +311,11 @@ function startEnvironment() {
   };
 
   stateObserver = new MutationObserver(() => {
-    target = stateTargets[document.body.dataset.signal] || stateTargets.off;
-    if (ready && reducedMotion && !document.hidden) requestFrame();
+    const nextTarget = stateTargets[document.body.dataset.signal] || stateTargets.off;
+    if (nextTarget === target) return;
+    target = nextTarget;
+    lastFrame = 0;
+    if (ready && !document.hidden) requestFrame();
   });
   stateObserver.observe(document.body, { attributes: true, attributeFilter: ["data-signal"] });
 

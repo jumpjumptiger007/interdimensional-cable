@@ -14,9 +14,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=42">
+  <link rel="stylesheet" href="style.css?v=50">
 </head>
 <body>
+  <a class="skip-link" href="#broadcast">Skip to receiver</a>
   <main class="environment" id="receiverEnvironment">
     <div class="environment-3d" aria-hidden="true"></div>
     <div class="environment-graphics" aria-hidden="true">
@@ -24,10 +25,10 @@
       <div class="environment-grid"></div>
     </div>
     <button class="page-help" id="btnHelp" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal">HELP <span aria-hidden="true">?</span></button>
-    <a class="page-home" href="https://yliu.tech/" aria-label="Yiqiang Adrian Liu — personal website"><img src="assets/brand/yal-mark.svg" alt=""></a>
+    <a class="page-home" href="https://yliu.tech/" aria-label="Yiqiang Adrian Liu — personal website"><img src="assets/brand/yal-mark.svg" width="233" height="116" alt=""></a>
 
     <div class="stage">
-      <section class="broadcast" aria-label="InterDemTV live broadcast">
+      <section class="broadcast" id="broadcast" tabindex="-1" aria-label="InterDemTV live broadcast">
         <div class="broadcast-heading">
           <div>
             <p class="eyebrow">LIVE DEMO / INTERDIMENSIONAL CABLE</p>
@@ -134,6 +135,6 @@
     </dialog>
   </main>
   <script src="app.js?v=41"></script>
-  <script type="module" src="environment-3d.js?v=41"></script>
+  <script type="module" src="environment-3d.js?v=44"></script>
 </body>
 </html>
