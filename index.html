@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=50">
+  <link rel="stylesheet" href="style.css?v=51">
 </head>
 <body>
   <a class="skip-link" href="#broadcast">Skip to receiver</a>
@@ -34,7 +34,7 @@
             <p class="eyebrow">LIVE DEMO / INTERDIMENSIONAL CABLE</p>
             <h1>INTERDEM<span class="title-accent">TV</span></h1>
           </div>
-          <p class="heading-note">CHANNEL SURFING<br>WITHOUT A DESTINATION</p>
+          <p class="heading-note">INTERDIMENSIONAL RECEIVER<br>QUIET / PHYSICAL / LEGIBLE<br>SIGNAL IS THE ACCENT</p>
         </div>
 
         <div class="monitor-aperture">
@@ -58,8 +58,8 @@
           </div>
         </div>
 
-        <aside class="signal-strip" id="signalModule" data-signal="off" aria-label="Signal oscilloscope">
-          <div class="signal-strip__heading"><span>SIGNAL</span><b id="scopeStatus" role="status" aria-live="polite">STANDBY</b></div>
+        <aside class="signal-strip telemetry" id="signalModule" data-signal="off" aria-label="Signal oscilloscope">
+          <div class="signal-strip__heading"><span>COHERENCE</span><b id="scopeStatus" role="status" aria-live="polite">STANDBY</b></div>
           <div class="scope-window">
             <svg viewBox="0 0 100 60" preserveAspectRatio="none" aria-label="Signal waveform" role="img">
               <path class="scope-grid" d="M0 0V60 M10 0V60 M20 0V60 M30 0V60 M40 0V60 M50 0V60 M60 0V60 M70 0V60 M80 0V60 M90 0V60 M100 0V60 M0 0H100 M0 10H100 M0 20H100 M0 30H100 M0 40H100 M0 50H100 M0 60H100" />
@@ -71,34 +71,44 @@
               </g>
             </svg>
           </div>
+          <div class="telemetry-bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="telemetry-carrier"><span>CARRIER</span><b>YOUTUBE</b></div>
         </aside>
       </section>
 
       <aside class="remote-wrap" aria-label="Remote control">
         <div class="remote-heading"><span>REMOTE</span><span>CONTROL</span></div>
-        <div class="remote-power-row">
-          <button class="power-key" id="btnPower" type="button" aria-label="Power" aria-pressed="false"><span aria-hidden="true"></span></button>
-          <span class="remote-power-state">RECEIVER <b id="powerState">OFF</b></span>
-        </div>
+        <div class="remote-body">
+          <div class="remote-power-row">
+            <button class="power-key" id="btnPower" type="button" aria-label="Power" aria-pressed="false"><span aria-hidden="true"></span></button>
+            <span class="remote-power-state">RECEIVER <b id="powerState">OFF</b></span>
+          </div>
 
-        <section class="remote-cluster" aria-label="Channel controls">
-          <span class="remote-caption">CHANNEL</span>
-          <button class="control-key" id="btnChannelNext" type="button" aria-label="Next channel"><span>CHANNEL UP</span><b aria-hidden="true">↑</b></button>
-          <button class="control-key" id="btnChannelPrev" type="button" aria-label="Previous channel"><span>CHANNEL DOWN</span><b aria-hidden="true">↓</b></button>
-        </section>
+          <section class="remote-cluster" aria-label="Channel controls">
+            <span class="remote-caption">CHANNEL</span>
+            <div class="remote-keys">
+              <button class="control-key" id="btnChannelPrev" type="button" aria-label="Previous channel"><span>CHANNEL DOWN</span><b aria-hidden="true">↓</b></button>
+              <button class="control-key" id="btnChannelNext" type="button" aria-label="Next channel"><span>CHANNEL UP</span><b aria-hidden="true">↑</b></button>
+            </div>
+          </section>
 
-        <section class="remote-cluster" aria-label="Volume controls">
-          <span class="remote-caption">VOLUME</span>
-          <button class="control-key" id="btnVolUp" type="button" aria-label="Volume up"><span>VOLUME +</span><b aria-hidden="true">+</b></button>
-          <button class="control-key" id="btnVolDown" type="button" aria-label="Volume down"><span>VOLUME −</span><b aria-hidden="true">−</b></button>
-          <button class="control-key control-key--mute" id="btnMute" type="button" aria-label="Mute" aria-pressed="false"><span>MUTE</span><b id="muteState" aria-hidden="true">OFF</b></button>
-        </section>
+          <section class="remote-cluster" aria-label="Volume controls">
+            <span class="remote-caption">VOLUME</span>
+            <div class="remote-keys">
+              <button class="control-key" id="btnVolDown" type="button" aria-label="Volume down"><span>VOLUME −</span><b aria-hidden="true">−</b></button>
+              <button class="control-key" id="btnVolUp" type="button" aria-label="Volume up"><span>VOLUME +</span><b aria-hidden="true">+</b></button>
+              <button class="control-key control-key--mute" id="btnMute" type="button" aria-label="Mute" aria-pressed="false"><span>MUTE</span><b id="muteState" aria-hidden="true">OFF</b></button>
+              <div class="control-key remote-level"><span>LEVEL</span><b id="volumeText">70</b></div>
+            </div>
+            <div class="volume-level" aria-hidden="true"><i id="volumeLevel"></i></div>
+          </section>
 
-        <div class="remote-utilities" aria-label="Receiver settings">
-          <button class="remote-mode" id="btnRandom" type="button" aria-label="Random channel navigation" aria-pressed="true"><span>MODE</span><b id="randomState">RND</b></button>
-          <button class="remote-mode" id="btnFilter" type="button" aria-label="CRT filter" aria-pressed="true"><span>FILTER</span><b id="filterState">ON</b></button>
-          <button class="remote-mode" id="btnFullscreen" type="button" aria-label="Toggle fullscreen" aria-pressed="false"><span>FULLSCREEN</span><b aria-hidden="true">↗</b></button>
-          <button class="remote-mode" id="btnHelpRemote" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal"><span>HELP</span><b aria-hidden="true">?</b></button>
+          <div class="remote-utilities" aria-label="Receiver settings">
+            <button class="remote-mode" id="btnRandom" type="button" aria-label="Random channel navigation" aria-pressed="true"><span>MODE</span><b id="randomState">RND</b></button>
+            <button class="remote-mode" id="btnFilter" type="button" aria-label="CRT filter" aria-pressed="true"><span>FILTER</span><b id="filterState">ON</b></button>
+            <button class="remote-mode" id="btnFullscreen" type="button" aria-label="Toggle fullscreen" aria-pressed="false"><span>FULLSCREEN</span><b aria-hidden="true">↗</b></button>
+            <button class="remote-mode" id="btnHelpRemote" type="button" aria-label="Open help" aria-haspopup="dialog" aria-controls="helpModal"><span>HELP</span><b aria-hidden="true">?</b></button>
+          </div>
         </div>
       </aside>
     </div>
@@ -134,7 +144,7 @@
       </div>
     </dialog>
   </main>
-  <script src="app.js?v=41"></script>
+  <script src="app.js?v=46"></script>
   <script type="module" src="environment-3d.js?v=44"></script>
 </body>
 </html>

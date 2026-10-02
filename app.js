@@ -32,7 +32,7 @@ function persistState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       muted: isMuted,
       random: isRandom,
-      volume: player?.getVolume?.() ?? window.savedVolume ?? 70,
+      volume: window.savedVolume ?? player?.getVolume?.() ?? 70,
       channelId: videoList[currentChannelIndex]
     }));
   } catch (_) { /* Storage may be unavailable in private browsing. */ }
@@ -155,6 +155,7 @@ function loadChannelVideo(id, saved) {
 function onPlayerReady() {
   if (!player) return;
   player.setVolume(window.savedVolume ?? 70);
+  syncVolumeUI(window.savedVolume ?? 70);
   if (isMuted) player.mute();
   loadChannelVideo(videoList[currentChannelIndex], videoPlaybackTimes[videoList[currentChannelIndex]]);
 }
@@ -320,6 +321,7 @@ function toggleMute() {
   isMuted = !isMuted;
   isMuted ? player.mute?.() : player.unMute?.();
   syncMuteUI();
+  syncVolumeUI();
   persistState();
 }
 function syncRandomUI() {
@@ -339,10 +341,20 @@ function syncFilterUI() {
   button.setAttribute("aria-pressed", String(isFilterOn));
 }
 function toggleFilter() { isFilterOn = !isFilterOn; syncFilterUI(); }
+function syncVolumeUI(value = player?.getVolume?.() ?? window.savedVolume ?? 70) {
+  const volume = isMuted ? 0 : Math.round(value);
+  const label = document.getElementById("volumeText");
+  const level = document.getElementById("volumeLevel");
+  if (label) label.textContent = isMuted ? "00" : String(volume);
+  if (level) level.style.width = `${volume}%`;
+}
 function changeVolume(delta) {
-  if (!player || !isPowerOn) return;
-  player.setVolume(Math.max(0, Math.min(100, player.getVolume() + delta)));
+  if (!player || !isPowerOn || typeof player.getVolume !== "function" || typeof player.setVolume !== "function") return;
+  const volume = Math.max(0, Math.min(100, player.getVolume() + delta));
+  player.setVolume(volume);
+  window.savedVolume = volume;
   if (delta > 0 && isMuted) { isMuted = false; player.unMute?.(); syncMuteUI(); }
+  syncVolumeUI(volume);
   persistState();
 }
 function setPressedFeedback(button) {
@@ -386,6 +398,7 @@ function initRemoteEvents() {
   syncRandomUI();
   syncFilterUI();
   syncFullscreenControl();
+  syncVolumeUI();
   const bind = (id, handler) => document.getElementById(id)?.addEventListener("click", event => {
     setPressedFeedback(event.currentTarget);
     handler(event);
