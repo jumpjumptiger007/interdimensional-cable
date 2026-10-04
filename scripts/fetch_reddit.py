@@ -1,6 +1,8 @@
 import json
 import os
 import re
+import stat
+import tempfile
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -13,9 +15,9 @@ DEFAULT_SUBREDDITS = [
     "analog_horror",
 ]
 
-# 同时支持 watch / embed / v / shorts / youtu.be 链接
+# 支持 watch / embed / v / youtu.be 链接；明确忽略 Shorts。
 YOUTUBE_REGEX = re.compile(
-    r"(?:youtube\.com/(?:watch\?v=|embed/|v/|shorts/)|youtu\.be/)([a-zA-Z0-9_-]{11})"
+    r"(?:youtube\.com/(?:watch\?v=|embed/|v/)|youtu\.be/)([a-zA-Z0-9_-]{11})"
 )
 
 ARCTIC_URL = "https://arctic-shift.photon-reddit.com/api/posts/search"
@@ -105,15 +107,33 @@ def fetch_arctic(subreddit, limit=100, pages=1):
 
 
 def load_existing(file_path):
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return data
-        except Exception:  # noqa: BLE001
-            pass
-    return []
+    if not os.path.exists(file_path):
+        return []
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise ValueError(f"Existing catalog is unreadable or corrupt: {file_path}") from error
+    if not isinstance(data, list):
+        raise ValueError(f"Existing catalog must be a JSON array: {file_path}")
+    return data
+
+
+def write_catalog(file_path, data):
+    directory = os.path.dirname(file_path) or "."
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=directory, delete=False) as output:
+            temporary_path = output.name
+            json.dump(data, output, indent=2)
+            output.write("\n")
+        mode = stat.S_IMODE(os.stat(file_path).st_mode) if os.path.exists(file_path) else 0o644
+        os.chmod(temporary_path, mode)
+        os.replace(temporary_path, file_path)
+    except Exception:
+        if temporary_path and os.path.exists(temporary_path):
+            os.unlink(temporary_path)
+        raise
 
 
 def main():
@@ -154,8 +174,7 @@ def main():
     if not combined:
         raise Exception("❌ 严重错误：未获取到任何有效视频 ID！")
 
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(combined, f, indent=2)
+    write_catalog(output_path, combined)
     print(f"✅ 已成功更新写入: {output_path}")
 
 

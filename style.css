@@ -225,7 +225,7 @@ body.webgl-active .environment-grid { opacity: .12; }
 }
 #player, #player iframe { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; width: 100%; height: 100%; }
 #player { z-index: 0; }
-#player iframe { border: 0; }
+#player iframe { border: 0; pointer-events: none; }
 .monitor-frame { position: absolute; top: 0; right: 0; bottom: 0; left: 0; inset: 0; pointer-events: none; }
 .monitor-frame span { position: absolute; top: -1px; right: 11%; width: 34px; height: 1px; background: var(--interface-rule); transition: background-color .45s ease, width .45s ease; }
 .monitor-aperture:has(.tv-screen[data-signal="locked"]) .monitor-frame span { width: 42px; background: var(--green); }
@@ -265,6 +265,24 @@ body.webgl-active .environment-grid { opacity: .12; }
   transition: opacity .2s ease;
 }
 .channel-display.show { opacity: .92; }
+.channel-display.persistent { padding: 8px 10px; background: rgba(5, 7, 6, .72); }
+.first-use-hint {
+  position: absolute;
+  z-index: 7;
+  right: 8px;
+  bottom: 12px;
+  left: 8px;
+  color: rgba(223, 231, 222, .62);
+  font: 500 clamp(8px, .78vw, 10px)/1.4 var(--mono);
+  letter-spacing: .12em;
+  text-align: center;
+  text-shadow: 0 1px 5px #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.first-use-hint.show { opacity: 1; }
+.tv-screen.powered-on .first-use-hint { opacity: 0; }
 .crt-vignette, .scanlines { z-index: 3; opacity: 0; transition: opacity .2s ease; }
 .crt-vignette { background: radial-gradient(ellipse, transparent 48%, rgba(0, 0, 0, .32) 100%), linear-gradient(110deg, rgba(237, 241, 236, .018), transparent 42%, rgba(237, 241, 236, .014)); }
 .scanlines { background: repeating-linear-gradient(to bottom, rgba(5, 7, 6, .14) 0 1px, transparent 1px 3px); }

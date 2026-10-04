@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=51">
+  <link rel="stylesheet" href="style.css?v=52">
 </head>
 <body>
   <a class="skip-link" href="#broadcast">Skip to receiver</a>
@@ -40,6 +40,7 @@
         <div class="monitor-aperture">
           <div class="tv-screen filters-on" id="tvScreen" data-signal="off">
             <div id="player" aria-label="Live video"></div>
+            <div class="first-use-hint" id="firstUseHint" role="status" aria-hidden="true">POWER ON TO FIND A SIGNAL</div>
             <div class="channel-display" id="channelDisplay" role="status" aria-live="polite">CH 001</div>
             <div class="crt-vignette" aria-hidden="true"></div>
             <div class="scanlines" aria-hidden="true"></div>
@@ -144,7 +145,7 @@
       </div>
     </dialog>
   </main>
-  <script src="app.js?v=46"></script>
+  <script src="app.js?v=47"></script>
   <script type="module" src="environment-3d.js?v=44"></script>
 </body>
 </html>

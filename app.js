@@ -6,10 +6,12 @@ const STORAGE_KEY = "retro-signal-tv-state-v1";
 const CHANNEL_TRANSITION_MS = 300;
 const CHANNEL_LOAD_DELAY_MS = 135;
 const POWER_ON_MS = 440;
+const VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const invalidVideoIds = new Set();
 const videoPlaybackTimes = {}, hasRandomSeeked = {};
 const screen = document.getElementById("tvScreen"), signalModule = document.getElementById("signalModule");
 const scopeWave = document.getElementById("scopeWave");
+let firstUsePending = false, firstSignalPool = [], curatedBootstrapAvailable = false, firstSignalTried = new Set(), activeFirstSignal = null, autoplayBlocked = false, bootstrapPowerRetry = false;
 const WAVEFORM_PRESETS = [
   "M0 30 C7 17 14 17 21 30 S35 43 42 30 S56 17 63 30 S77 43 84 30 S95 20 100 30",
   "M0 30 C3 22 6 22 9 30 S15 38 18 30 S24 22 27 30 S33 38 36 30 S42 22 45 30 S51 38 54 30 S60 22 63 30 S69 38 72 30 S78 22 81 30 S87 38 90 30 S96 22 100 30",
@@ -18,22 +20,36 @@ const WAVEFORM_PRESETS = [
 ];
 
 function readStoredState() {
+  let raw;
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    raw = localStorage.getItem(STORAGE_KEY);
+  } catch (_) {
+    // If storage is unavailable, keep first-use guidance session-local.
+    firstUsePending = true;
+    syncFirstUseHint();
+    return;
+  }
+  firstUsePending = raw === null;
+  if (raw === null) { syncFirstUseHint(); return; }
+  try {
+    const saved = JSON.parse(raw);
     if (!saved || typeof saved !== "object") return;
     isMuted = Boolean(saved.muted);
     isRandom = saved.random !== false;
     if (Number.isFinite(saved.volume)) window.savedVolume = Math.max(0, Math.min(100, saved.volume));
     if (typeof saved.channelId === "string") window.savedChannelId = saved.channelId;
-  } catch (_) { /* Invalid local state must not stop the receiver. */ }
+  } catch (_) { /* Existing state still identifies a returning user. */ }
 }
 function persistState() {
+  // A new browser is not returning until a real first signal reaches PLAYING.
+  if (firstUsePending) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       muted: isMuted,
       random: isRandom,
       volume: window.savedVolume ?? player?.getVolume?.() ?? 70,
-      channelId: videoList[currentChannelIndex]
+      channelId: videoList[currentChannelIndex],
+      firstSignalComplete: true
     }));
   } catch (_) { /* Storage may be unavailable in private browsing. */ }
 }
@@ -50,12 +66,31 @@ async function loadVideoList() {
     console.warn("Using bundled fallback channels.", error);
     videoList = [...videoList];
   } finally {
+    try {
+      const response = await fetch("first-signals.json");
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const canonical = new Set(videoList);
+          firstSignalPool = [...new Set(data.filter(id => typeof id === "string" && VIDEO_ID_PATTERN.test(id) && canonical.has(id)))];
+          curatedBootstrapAvailable = firstSignalPool.length > 0;
+        }
+      }
+    } catch (_) { /* A missing or invalid optional pool falls back to the catalog. */ }
     const remembered = videoList.indexOf(window.savedChannelId);
     currentChannelIndex = remembered >= 0 ? remembered : 0;
     syncChannelRail();
+    syncFirstUseHint();
     listReady = true;
     tryInitPlayer();
   }
+}
+function syncFirstUseHint() {
+  const hint = document.getElementById("firstUseHint");
+  if (!hint) return;
+  const visible = firstUsePending && !isPowerOn;
+  hint.classList.toggle("show", visible);
+  hint.setAttribute("aria-hidden", String(!visible));
 }
 function channelLabel() { return "CH " + String(currentChannelIndex + 1).padStart(3, "0"); }
 function syncChannelRail() {
@@ -87,6 +122,7 @@ function clearScopeAcquisition() {
 function showChannelOSD(message) {
   const osd = document.getElementById("channelDisplay");
   if (!osd || !isPowerOn) return;
+  osd.classList.remove("persistent");
   osd.textContent = message || channelLabel() + (isRandom ? " · RND" : "");
   osd.classList.add("show");
   clearTimeout(osdTimer);
@@ -137,11 +173,51 @@ function tryInitPlayer() {
   player = new YT.Player("player", {
     videoId: videoList[currentChannelIndex],
     playerVars,
-    events: { onStateChange: onPlayerStateChange, onError: onPlayerError, onReady: onPlayerReady }
+    events: { onStateChange: onPlayerStateChange, onError: onPlayerError, onReady: onPlayerReady, onAutoplayBlocked }
   });
+}
+function startBootstrapSignal() {
+  if (!player || !isPowerOn || !firstUsePending || !curatedBootstrapAvailable) return false;
+  const candidates = firstSignalPool.filter(id => !firstSignalTried.has(id) && !invalidVideoIds.has(id));
+  if (!candidates.length) return false;
+  const id = candidates[Math.floor(Math.random() * candidates.length)];
+  firstSignalTried.add(id);
+  activeFirstSignal = id;
+  bootstrapPowerRetry = false;
+  currentChannelIndex = videoList.indexOf(id);
+  syncChannelRail();
+  pendingRandomStartId = null;
+  startTransition();
+  showChannelOSD();
+  player.loadVideoById?.({ videoId: id, startSeconds: 0 });
+  return true;
+}
+function retryBootstrapSignal() {
+  if (!player || !isPowerOn || !firstUsePending || !curatedBootstrapAvailable) return false;
+  if (!activeFirstSignal || invalidVideoIds.has(activeFirstSignal) || !videoList.includes(activeFirstSignal)) {
+    return startBootstrapSignal();
+  }
+  currentChannelIndex = videoList.indexOf(activeFirstSignal);
+  syncChannelRail();
+  pendingRandomStartId = null;
+  startTransition();
+  showChannelOSD();
+  player.loadVideoById?.({ videoId: activeFirstSignal, startSeconds: 0 });
+  return true;
+}
+function ensureBootstrapSignal() {
+  if (bootstrapPowerRetry) {
+    bootstrapPowerRetry = false;
+    return retryBootstrapSignal();
+  }
+  return activeFirstSignal ? true : startBootstrapSignal();
 }
 function loadChannelVideo(id, saved) {
   if (!player || !id) return;
+  if (firstUsePending && curatedBootstrapAvailable) {
+    ensureBootstrapSignal();
+    return;
+  }
   if (saved === undefined && isRandom) {
     pendingRandomStartId = id;
     player.cueVideoById?.({ videoId: id, startSeconds: 0 });
@@ -157,6 +233,12 @@ function onPlayerReady() {
   player.setVolume(window.savedVolume ?? 70);
   syncVolumeUI(window.savedVolume ?? 70);
   if (isMuted) player.mute();
+  // Player creation can finish after the receiver was switched back off.
+  if (!isPowerOn) return;
+  if (firstUsePending && curatedBootstrapAvailable) {
+    if (!ensureBootstrapSignal()) showNoSignal();
+    return;
+  }
   loadChannelVideo(videoList[currentChannelIndex], videoPlaybackTimes[videoList[currentChannelIndex]]);
 }
 function onPlayerStateChange(event) {
@@ -171,8 +253,23 @@ function onPlayerStateChange(event) {
     player.loadVideoById?.({ videoId: id, startSeconds: start });
   }
   if (event.data === YT.PlayerState.PLAYING && isPowerOn && id && (!activePlayerId || activePlayerId === id)) {
+    if (firstUsePending && curatedBootstrapAvailable && activeFirstSignal !== id) return;
+    const wasAutoplayBlocked = autoplayBlocked;
+    const completedFirstUse = firstUsePending;
+    autoplayBlocked = false;
+    bootstrapPowerRetry = false;
+    document.getElementById("channelDisplay")?.classList.remove("persistent");
+    if (firstUsePending) {
+      firstUsePending = false;
+      activeFirstSignal = null;
+    }
     endTransition();
     setSignalState("locked");
+    if (wasAutoplayBlocked) showChannelOSD();
+    if (completedFirstUse) {
+      persistState();
+      syncFirstUseHint();
+    }
   }
   const endedState = window.YT?.PlayerState?.ENDED ?? 0;
   if (event.data === endedState && isPowerOn && id && (!activePlayerId || activePlayerId === id)) {
@@ -184,10 +281,29 @@ function onPlayerStateChange(event) {
 function onPlayerError() {
   const failed = videoList[currentChannelIndex];
   if (!failed || !isPowerOn) return;
+  autoplayBlocked = false;
+  bootstrapPowerRetry = false;
+  document.getElementById("channelDisplay")?.classList.remove("persistent");
   invalidVideoIds.add(failed);
+  if (firstUsePending && curatedBootstrapAvailable && activeFirstSignal === failed) {
+    activeFirstSignal = null;
+    if (startBootstrapSignal()) return;
+    showNoSignal();
+    return;
+  }
   startTransition("signal-lost");
   showChannelOSD("SIGNAL LOST");
   setTimeout(() => changeChannel(1, true), 180);
+}
+function onAutoplayBlocked() {
+  if (!isPowerOn) return;
+  autoplayBlocked = true;
+  setSignalState("seeking");
+  const osd = document.getElementById("channelDisplay");
+  if (!osd) return;
+  osd.textContent = "PRESS POWER TO START SIGNAL";
+  osd.classList.add("show", "persistent");
+  clearTimeout(osdTimer);
 }
 function isPlayable(id) { return Boolean(id && !invalidVideoIds.has(id)); }
 function findNextPlayableIndex(direction, start = currentChannelIndex) {
@@ -235,6 +351,13 @@ function endTransition() {
 }
 function changeChannel(direction, fromFailure = false) {
   if (!isPowerOn || !videoList.length) return;
+  if (autoplayBlocked) return;
+  if (firstUsePending && curatedBootstrapAvailable) {
+    clearTimeout(channelLoadTimer);
+    channelLoadTimer = null;
+    if (!ensureBootstrapSignal()) showNoSignal();
+    return;
+  }
   if (!fromFailure) saveCurrentPlaybackPosition();
   const next = isRandom ? chooseRandomPlayableIndex() : findNextPlayableIndex(direction);
   if (next === null) return showNoSignal();
@@ -254,6 +377,8 @@ function changeChannel(direction, fromFailure = false) {
 function showNoSignal() {
   clearTimeout(channelLoadTimer);
   channelLoadTimer = null;
+  autoplayBlocked = false;
+  bootstrapPowerRetry = false;
   endTransition();
   clearScopeAcquisition();
   showChannelOSD("NO SIGNAL");
@@ -270,8 +395,15 @@ function syncPowerUI() {
   button?.setAttribute("aria-pressed", String(isPowerOn));
   if (!isPowerOn) clearScopeAcquisition();
   setSignalState(isPowerOn ? "seeking" : "off");
+  syncFirstUseHint();
 }
 function togglePower() {
+  if (isPowerOn && autoplayBlocked) {
+    playClick("power");
+    buzz();
+    player?.playVideo?.();
+    return;
+  }
   isPowerOn = !isPowerOn;
   clearTimeout(powerTimer);
   powerTimer = null;
@@ -289,10 +421,15 @@ function togglePower() {
       powerTimer = null;
       screen?.classList.remove("powering-on");
       tryInitPlayer();
-      if (player && !pendingRandomStartId) player.playVideo?.();
+      if (player && firstUsePending && curatedBootstrapAvailable) {
+        if (!ensureBootstrapSignal()) showNoSignal();
+      } else if (player && !pendingRandomStartId) {
+        player.playVideo?.();
+      }
     }, POWER_ON_MS);
     return;
   }
+  bootstrapPowerRetry = Boolean(firstUsePending && activeFirstSignal);
   saveCurrentPlaybackPosition();
   persistState();
   clearTimeout(transitionTimer);
@@ -439,7 +576,7 @@ function initRemoteEvents() {
     setPressedFeedback(document.getElementById(entry[0]));
     entry[1]();
   });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=41").catch(() => {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js?version=42").catch(() => {});
   loadVideoList();
 }
 
